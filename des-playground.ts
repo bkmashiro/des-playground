@@ -6,9 +6,6 @@ type _TupleOf<T, N extends number, R extends unknown[]> = R['length'] extends N 
 
 type Bits<Length extends number> = TupleOf<0 | 1, Length>;
 
-//TODO check if this is correct
-type MapedArray<T extends unknown[], K extends (u: unknown) => unknown> = { [K in keyof T]: K extends keyof T ? K : never };
-
 
 abstract class Op<T = any, R = any> {
   constructor() { }
