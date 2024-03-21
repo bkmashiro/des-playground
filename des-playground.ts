@@ -9,8 +9,11 @@ type Bits<Length extends number> = TupleOf<0 | 1, Length>;
 //TODO check if this is correct
 type MapedArray<T extends unknown[], K extends (u: unknown) => unknown> = { [K in keyof T]: K extends keyof T ? K : never };
 
-abstract class Op<T, R> {
+
+abstract class Op<T = any, R = any> {
+  constructor() { }
   abstract apply(input: T): R;
+  withArgs(..._args: any[]) { }
 }
 
 class Add<L extends number> extends Op<[Bits<L>, Bits<L>], [Bits<L>]> {
@@ -69,7 +72,7 @@ class Xor<L extends number> extends Op<[Bits<L>, Bits<L>], [Bits<L>]> {
   }
 }
 
-class Output<L extends number> extends Op<[Bits<L>], [Bits<L>]> {
+class _Output<L extends number> extends Op<[Bits<L>], [Bits<L>]> {
   memory: any
   apply(input: [Bits<L>]): [Bits<L>] {
     this.memory = input;
@@ -89,6 +92,12 @@ class Input<L extends number> extends Op<[], [Bits<L>]> {
   }
 }
 
+class NotImplemented extends Op {
+  apply() {
+    throw new Error('Not implemented');
+  }
+}
+
 type NonEmptyArray<T> = [T, ...T[]];
 type EmptyableArray<T> = [...T[]];
 type ComputationalNodesInputType<T extends NonEmptyArray<unknown>> = {
@@ -99,6 +108,19 @@ type ComputationalNodesOutputType<R extends NonEmptyArray<unknown>> = {
 };
 
 
+const ops = {
+  add: Add,
+  cat: Concat,
+  shiftLeft: ShiftLeft,
+  shiftRight: ShiftRight,
+  not: Not,
+  and: And,
+  or: Or,
+  xor: Xor,
+  // output: Output,
+  // input: Input,
+  __NOT_IMPLEMENTED__: NotImplemented,
+} as const;
 
 class ComputationalNode<T extends NonEmptyArray<unknown>, R extends NonEmptyArray<unknown>> {
   constructor(
@@ -114,18 +136,52 @@ class ComputationalNode<T extends NonEmptyArray<unknown>, R extends NonEmptyArra
   // children is ComputationalNode<output of this node, unknown>
   parent = [] as ComputationalNodesInputType<T>
   children = [] as ComputationalNodesOutputType<R>
-  addParent(node: ComputationalNode<any, any>) {
-    this.parent.push(node);
-    node.children.push(this);
+  from(...nodes: ComputationalNode<any, any>[]) {
+    nodes.forEach((node, i) => {
+      this.parent[i] = node;
+      node.children.push(this);
+    });
+    return this;
   }
 
-  public static Input(val: any) {
-    return new ComputationalNode(new Input(val));
+  to(...nodes: ComputationalNode<any, any>[]) {
+    nodes.forEach((node, i) => {
+      this.children[i] = node;
+      node.parent.push(this);
+    });
+    return this;
+  }
+}
+
+function Literal(val: any) {
+  return new ComputationalNode(new Input(val));
+}
+
+function Output() {
+  return new ComputationalNode(new _Output());
+}
+
+function $<
+  Input extends NonEmptyArray<unknown>,
+  Output extends NonEmptyArray<unknown>,
+  K extends keyof typeof ops,
+>(name: K) {
+  const instance = new (ops[name] as any)() as InstanceType<typeof ops[K]>;
+  return new ComputationalNode(instance as any) as ComputationalNode<Input, Output>;
+}
+
+function From(...nodes: ComputationalNode<any, any>[]) {
+  class _ {
+    to = (name: keyof typeof ops | 'out') => {
+      if (name === 'out') {
+        return Output().from(...nodes);
+      }
+      const node = $(name)
+      return node.from(...nodes);
+    }
   }
 
-  public static Output() {
-    return new ComputationalNode(new Output());
-  }
+  return new _();
 }
 
 class ComputationalGraph {
@@ -146,6 +202,22 @@ class ComputationalGraph {
 
   addOutputNode(node: ComputationalNode<any, any>) {
     this.outputNodes.add(node);
+  }
+
+  static of(...nodes: ComputationalNode<any, any>[]) {
+    const graph = new ComputationalGraph();
+    nodes.forEach((node) => {
+      graph.addNode(node);
+      // if a node has no parent, then it's an input node
+      if (node.parent.length === 0) {
+        graph.addInputNode(node);
+      }
+      // if a node has no children, then it's an output node
+      if (node.children.length === 0) {
+        graph.addOutputNode(node);
+      }
+    });
+    return graph;
   }
 
   // run according to the topological order
@@ -184,28 +256,85 @@ class ComputationalGraph {
   }
 }
 
+/**
+ * P{2,1,...,n} - permutation of n elements, position 2, 1, ..., n
+ * LS[n] - left shift
+ * RS[n] - right shift
+ * SP[n] - split into two parts, [0..n-1], [n.. rest]
+ * C - concatenate all parameters
+ * ADD - add all parameters
+ * XOR - xor all parameters
+ * AND - and all parameters
+ * OR - or all parameters
+ * NOT - not all parameters
+ * SELECT[n] - select the nth element in the parameters list
+ * EP{2,3,1,4,2,3,4,1} - expand permutation
+ */
+class ShortHandParser {
+  constructor() { }
+
+  parse() {
+
+  }
+}
+
 
 // Test
-const i = ComputationalNode.Input([1, 0, 0, 1])
-const j = ComputationalNode.Input([0, 1, 0, 1])
-const k = ComputationalNode.Input([0, 0, 1, 1])
-const add = new ComputationalNode(new Add());
-const cat = new ComputationalNode(new Concat());
-const output = ComputationalNode.Output();
+// const i = Literal([1, 0, 0, 1])
+// const j = Literal([0, 1, 0, 1])
+// const k = Literal([0, 0, 1, 1])
 
-add.addParent(i);
-add.addParent(j);
+// const add = From(i, j).to('add');
+// const cat = From(add, k).to('cat');
+// const output = From(cat).to('out');
 
-cat.addParent(add);
-cat.addParent(k);
+// const graph = ComputationalGraph.of(i, j, k, add, cat, output);
 
-output.addParent(cat);
+// graph.run();
 
-const graph = new ComputationalGraph();
-graph.addInputNode(i);
-graph.addInputNode(j);
-graph.addInputNode(k);
 
-graph.addOutputNode(output);
+function parseOp(input: string) {
+  const match = input.match(/^(\w+)\{(.+?)\}$/);
+  if (match) {
+    const [, name, paramsStr] = match;
+    const params = paramsStr.split(',').map(param => parseInt(param.trim()));
+    return { name, params };
+  }
+  return null;
+}
 
-graph.run();
+const alias: {
+  [key: string]: keyof typeof ops
+} = {
+  LS: 'shiftLeft',
+  RS: 'shiftRight',
+  SP: 'cat',
+  ADD: 'add',
+  XOR: 'xor',
+  AND: 'and',
+  OR: 'or',
+  NOT: 'not',
+  EP: '__NOT_IMPLEMENTED__',
+  P: '__NOT_IMPLEMENTED__',
+} as const;
+
+function createOpInstance(input: string) {
+  const op = parseOp(input);
+  if (op) {
+    // @ts-ignore
+    if (ops[alias[op.name]]) {
+      console.log(`Creating op: ${op.name} with params: ${op.params}`);
+      const node = $(alias[op.name] as any)
+      node.op.withArgs(...op.params);
+      return node;
+    } else {
+      console.error(`Unknown op: ${op.name}`);
+      return null
+    }
+  }
+  return op;
+}
+const example = "P{2,1,3,4} LS{3} SP{3} EP{2,3,1,4,2,3,4,1}";
+
+const myops = example.split(/\s+/).map(createOpInstance).filter(op => op !== null);
+console.log(myops);
