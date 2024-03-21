@@ -1,4 +1,5 @@
 import { Number, Test, Object, List } from "ts-toolbelt"
+import { unwarpDeep } from "./helper";
 
 type TupleOf<T, N extends number> = N extends N ? number extends N ? T[] : _TupleOf<T, N, []> : never;
 type _TupleOf<T, N extends number, R extends unknown[]> = R['length'] extends N ? R : _TupleOf<T, N, [T, ...R]>;
@@ -14,12 +15,14 @@ abstract class Op<T, R> {
 
 class Add<L extends number> extends Op<[Bits<L>, Bits<L>], [Bits<L>]> {
   apply([a, b]: [Bits<L>, Bits<L>]): [Bits<L>] {
+    // lower is on the right
     let carry = 0;
-    const result = a.map((bit, i) => {
-      const sum = bit + b[i] + carry;
-      carry = sum >> 1;
-      return sum & 1;
-    });
+    const result = a;
+    for (let i = a.length - 1; i >= 0; i--) {
+      const sum = a[i] + b[i] + carry;
+      result[i] = sum % 2 as any;
+      carry = sum > 1 ? 1 : 0;
+    }
     return [result] as [Bits<L>];
   }
 }
@@ -74,6 +77,18 @@ class Output<L extends number> extends Op<[Bits<L>], [Bits<L>]> {
   }
 }
 
+class Input<L extends number> extends Op<[], [Bits<L>]> {
+  constructor(val?: any) {
+    super();
+    this.memory = val;
+  }
+
+  memory: any
+  apply(): [Bits<L>] {
+    return [this.memory] as [Bits<L>];
+  }
+}
+
 type NonEmptyArray<T> = [T, ...T[]];
 type EmptyableArray<T> = [...T[]];
 type ComputationalNodesInputType<T extends NonEmptyArray<unknown>> = {
@@ -90,7 +105,7 @@ class ComputationalNode<T extends NonEmptyArray<unknown>, R extends NonEmptyArra
     public op: Op<T, R>,
   ) { }
 
-  apply(input: T): R {
+  apply(...input: T): R {
     return this.op.apply(input);
   }
 
@@ -102,6 +117,14 @@ class ComputationalNode<T extends NonEmptyArray<unknown>, R extends NonEmptyArra
   addParent(node: ComputationalNode<any, any>) {
     this.parent.push(node);
     node.children.push(this);
+  }
+
+  public static Input(val: any) {
+    return new ComputationalNode(new Input(val));
+  }
+
+  public static Output() {
+    return new ComputationalNode(new Output());
   }
 }
 
@@ -122,55 +145,67 @@ class ComputationalGraph {
   }
 
   addOutputNode(node: ComputationalNode<any, any>) {
-    const _output = new ComputationalNode(new Output());
-    _output.addParent(node);
-    this.outputNodes.add(_output);
+    this.outputNodes.add(node);
   }
 
+  // run according to the topological order
   run() {
-    // we use topological sort to run the graph
-    const visited = new Set<ComputationalNode<any, any>>();
-    const stack = [] as ComputationalNode<any, any>[];
+    const set = new Set<ComputationalNode<any, any>>(); // to avoid duplicate nodes
+    const cache = new Map<ComputationalNode<any, any>, any>(); // cache the result of each node
+
     this.inputNodes.forEach((node) => {
-      stack.push(node);
+      set.add(node);
     });
-    while (stack.length > 0) {
-      const node = stack.pop()!;
-      if (!visited.has(node)) {
-        visited.add(node);
-        const input = node.parent.map((parent) => {
-          return parent.children.map((child) => {
-            return child.apply(parent.apply(input));
-          });
-        });
-        node.apply(input);
-        node.children.forEach((child) => {
-          stack.push(child);
-        });
-      }
+
+    while (set.size > 0) {
+      const node = set.values().next().value as ComputationalNode<any, any>;
+      set.delete(node);
+      // assume we can always get the result from cache
+      // if not, then it's not a valid graph (not a DAG)
+      const input = node.parent.map((parent) => cache.get(parent));
+      // console.log(`in : `, input);
+      // console.log(`in (unwarp): `, unwarpDeep(input));
+      const output = node.apply(...unwarpDeep(input));
+      // console.log(`out: `, output);
+      cache.set(node, output);
+      node.children.forEach((child) => {
+        set.add(child);
+      });
     }
 
-    // output the result
+    // collect the result
+    const result = [] as any[];
     this.outputNodes.forEach((node) => {
-      console.log((node.op as Output<any>).memory);
+      result.push(cache.get(node));
     });
+
+    // console.log(result);
+    console.log(JSON.stringify(result, null, 2));
   }
 }
 
 
 // Test
-const add = new Add();
-const concat = new Concat();
+const i = ComputationalNode.Input([1, 0, 0, 1])
+const j = ComputationalNode.Input([0, 1, 0, 1])
+const k = ComputationalNode.Input([0, 0, 1, 1])
+const add = new ComputationalNode(new Add());
+const cat = new ComputationalNode(new Concat());
+const output = ComputationalNode.Output();
 
-const a = new ComputationalNode(add);
-const b = new ComputationalNode(add);
-const c = new ComputationalNode(concat);
+add.addParent(i);
+add.addParent(j);
 
-a.addParent(b);
-b.addParent(c);
+cat.addParent(add);
+cat.addParent(k);
+
+output.addParent(cat);
 
 const graph = new ComputationalGraph();
-graph.addInputNode(a);
-graph.addInputNode(b);
-graph.addOutputNode(c);
+graph.addInputNode(i);
+graph.addInputNode(j);
+graph.addInputNode(k);
+
+graph.addOutputNode(output);
+
 graph.run();
