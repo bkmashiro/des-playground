@@ -335,7 +335,7 @@ class ComputationalGraph {
     });
 
     // console.log(result);
-    console.log(JSON.stringify(result, null, 2));
+    // console.log(JSON.stringify(result, null, 2));
 
     return result;
   }
@@ -458,18 +458,46 @@ function tryParseArgs(input: string): Argument | null {
   return null;
 }
 
-function Sequencial(init_str: string) {
+function Grouped(init_str: string) {
   const ops = init_str.split(/\s+/).map(createOpInstance);
   if (ops.length === 0 || ops.some(op => op === null)) {
     throw new Error('Not valid ops list');
   }
   // create OpGroup
-  return new OpGroup(ops as any);
+  return {
+    sequencial: new OpGroup(ops as any),
+    ops,
+  }
+}
+
+function Sequencial<T extends string>(init_str: T) {
+  const ops = init_str.split(/\s+/).map(createOpInstance);
+  if (ops.length === 0 || ops.some(op => op === null)) {
+    throw new Error('Not valid ops list');
+  }
+  // create computational nodes
+  // @ts-ignore op is not null
+  const nodes = ops.map(op => new ComputationalNode(op));
+  // connect nodes
+  nodes.reduce((prev, current) => {
+    prev.to(current);
+    return current;
+  });
+
+  return nodes
 }
 
 
-const sequencial = Sequencial("P{2,1,3,4} LS{3} EP{4,1,2,3,2,3,4,1}"); 
-console.log(sequencial.apply([[1, 0, 0, 1]]));
+// const { sequencial } = Grouped("P{2,1,3,4} LS{3} EP{4,1,2,3,2,3,4,1}"); 
+// console.log(sequencial.apply([[1, 0, 0, 1]]));
 // after P: [0, 1, 0, 1]
 // after LS: [1, 0, 1, 0]
 // after EP: [0, 1, 0, 1, 0, 1, 0, 1]
+
+const [P, LS, EP] = Sequencial("P{2,1,3,4} LS{3} EP{4,1,2,3,2,3,4,1}");
+const input = Literal([1, 0, 0, 1]);
+const output = Output();
+P.from(input)
+EP.to(output);
+const graph = ComputationalGraph.of(input, output, P, LS, EP);
+console.log(graph.run());
