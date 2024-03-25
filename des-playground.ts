@@ -487,7 +487,13 @@ function Sequencial<T extends string>(init_str: T) {
   return nodes
 }
 
-
+function DeepCopyOp(op: Op) {
+  const instance = new (op.constructor as any)();
+  // deep copy all in op
+  // Object.keys(op).forEach((key) => {
+  //   instance[key] = op[key];
+  // });
+}
 // const { sequencial } = Grouped("P{2,1,3,4} LS{3} EP{4,1,2,3,2,3,4,1}"); 
 // console.log(sequencial.apply([[1, 0, 0, 1]]));
 // after P: [0, 1, 0, 1]
