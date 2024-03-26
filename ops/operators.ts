@@ -83,7 +83,6 @@ class Permutation<L extends number> extends Op<[Bits<L>], [Bits<any>]> {
 
     const result = new Array(this._permutation.length);
     for (let i = 0; i < this._permutation.length; i++) {
-      console.log(this._permutation[i], `=>`, input[0][this._permutation[i]])
       result[i] = input[0][this._permutation[i]];
     }
     return [result] as [Bits<L>];
@@ -155,6 +154,36 @@ class Split<L extends number> extends Op<[Bits<L>], Bits<any>[]> {
   }
 }
 
+class SBox extends Op<[Bits<any>], [Bits<any>]> {
+  _sbox: number[][] = [];
+  withArgs(...args: any[]) {
+    const str = args[0];
+    const rows = str.split(';');
+    // , or space as separator
+    this._sbox = rows.map((row: string) => row.split(
+      row.includes(',') ? ',' : ' '
+    ).map((n) => parseInt(n)));
+  }
+
+  apply(input: [Bits<any>]): [Bits<any>] {
+    // 1st, 4th bit as row, 2nd, 3rd bit as column
+    const row = input[0][0] * 2 + input[0][3];
+    const col = input[0][1] * 2 + input[0][2];
+    const value = this._sbox[row][col];
+    // convert to binary
+    const result = new Array(4).fill(0);
+    for (let i = 0; i < 4; i++) {
+      result[3 - i] = value >> i & 1;
+    }
+    return [result] as [Bits<any>];
+  }
+}
+
+class Swap extends Op<[Bits<any>, Bits<any>], [Bits<any>, Bits<any>]> {
+  apply([a, b]: [Bits<any>, Bits<any>]): [Bits<any>, Bits<any>] {
+    return [b, a];
+  }
+}
 class OpGroup<T extends NonEmptyArray<unknown>, R extends NonEmptyArray<unknown>> extends Op<T, R> {
   constructor(private ops: Op[]) {
     super();
@@ -166,6 +195,22 @@ class OpGroup<T extends NonEmptyArray<unknown>, R extends NonEmptyArray<unknown>
       result = op.apply(result);
     });
     return result as R;
+  }
+}
+
+const __INPUT_NOT_SET = Symbol('Input not set');
+class _Input<L extends number> extends Op<[], [Bits<L>]> {
+  _input: any = __INPUT_NOT_SET
+
+  apply(): [Bits<L>] {
+    if (this._input === __INPUT_NOT_SET) {
+      throw new Error('Input not set');
+    }
+    return [this._input] as [Bits<L>];
+  }
+
+  withArgs(...args: any[]) {
+    this._input = args[0];
   }
 }
 
@@ -182,7 +227,7 @@ class _Output<L extends number> extends Op<[Bits<L>], [Bits<L>]> {
   }
 }
 
-class Input<L extends number> extends Op<[], [Bits<L>]> {
+class _Literal<L extends number> extends Op<[], [Bits<L>]> {
   constructor(val?: any) {
     super();
     this.memory = val;
@@ -216,8 +261,11 @@ export {
   Copy,
   Select,
   Split,
+  SBox,
+  Swap,
   OpGroup,
+  _Input,
   _Output,
-  Input,
+  _Literal,
   NotImplemented,
 }

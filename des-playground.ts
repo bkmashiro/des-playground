@@ -1,5 +1,5 @@
 import { unwarpDeep } from "./helper";
-import { _Output, Add, And, Concat, Copy, ExpandPermutation, Input, Not, NotImplemented, Op, OpGroup, Or, Permutation, Select, ShiftLeft, ShiftRight, Split, Xor } from "./ops/operators";
+import { _Output, Add, And, Concat, Copy, ExpandPermutation, _Literal, Not, NotImplemented, Op, OpGroup, Or, Permutation, Select, ShiftLeft, ShiftRight, Split, Xor, _Input, SBox, Swap } from "./ops/operators";
 import { NonEmptyArray, EmptyableArray } from "./type.helper";
 
 type ComputationalNodesInputType<T extends NonEmptyArray<unknown>> = {
@@ -36,6 +36,8 @@ const ops = {
   split: Split,
   permutation: Permutation,
   expandPermutation: ExpandPermutation,
+  sbox: SBox,
+  swap: Swap,
   // output: Output,
   // input: Input,
   __NOT_IMPLEMENTED__: NotImplemented,
@@ -57,7 +59,7 @@ class ComputationalNode<T extends NonEmptyArray<unknown>, R extends NonEmptyArra
   children = [] as ComputationalNodesOutputType<R>
   from(...nodes: ComputationalNode<any, any>[]) {
     nodes.forEach((node, i) => {
-      this.parent[i] = node;
+      this.parent.push(node);
       node.children.push(this);
     });
     return this;
@@ -65,14 +67,20 @@ class ComputationalNode<T extends NonEmptyArray<unknown>, R extends NonEmptyArra
 
   to(...nodes: ComputationalNode<any, any>[]) {
     nodes.forEach((node, i) => {
-      this.children[i] = node;
+      this.children.push(node);
       node.parent.push(this);
     });
   }
 }
 
 function Literal(val: any) {
-  return new ComputationalNode(new Input(val));
+  return new ComputationalNode(new _Literal(val));
+}
+
+function Input(name: string) {
+  const input = new _Input();
+  input.withArgs(name);
+  return new ComputationalNode(input);
 }
 
 function Output(name: string = '') {
@@ -148,6 +156,13 @@ class ComputationalGraph {
     return graph;
   }
 
+  static scope(scoped: () => {
+    [key: string]: ComputationalNode<any, any>
+  }) {
+    const nodes = scoped();
+    return this.of(...Object.values(nodes));
+  }
+
   named_results = new Map<string, any>();
 
   // run according to the topological order
@@ -166,9 +181,9 @@ class ComputationalGraph {
       // if not, then it's not a valid graph (not a DAG)
       const input = node.parent.map((parent) => cache.get(parent));
       console.log(`current running Op: `, node.op.constructor.name);
-      console.log(`in (unwarp): `, unwarpDeep(input));
+      // console.log(`in (unwarp): `, unwarpDeep(input));
       const output = node.apply(...unwarpDeep(input));
-      console.log(`out: `, output);
+      // console.log(`out: `, output);
       cache.set(node, output);
       node.children.forEach((child) => {
         set.add(child);
@@ -194,12 +209,22 @@ class ComputationalGraph {
     return this.named_results.get(name);
   }
 
-  run_with_input(input: Map<ComputationalNode<any, any>, any>) {
-    // override the input nodes
-    input.forEach((value, node) => {
-      (node.op as Input<any>).memory = value;
-    });
+  retrive_bits_results(...names: string[]) {
+    return names.map(name => this.named_results.get(name)[0]);
+  }
 
+  run_with_input(input: Record<string, any>) {
+    // override the input nodes
+    this.inputNodes.forEach((node) => {
+      if (node.op instanceof _Input) {
+        const name = node.op._input;
+        if (name in input) {
+          node.op._input = input[name];
+        } else {
+          throw new Error(`Input ${name} not found`);
+        }
+      }
+    });
     return this.run();
   }
 }
@@ -270,6 +295,8 @@ const alias: {
   P: 'permutation',
   SP: 'split',
   SEL: 'select',
+  SBOX: 'sbox',
+  SW: 'swap'
 } as const;
 
 function createOp(input: string) {
@@ -340,47 +367,90 @@ function Sequencial<T extends string>(init_str: T) {
   return nodes
 }
 
-// simple DES generate key
+const keygen = ComputationalGraph.scope(() => {
+  // simple DES generate key
+  const key_input = Input('key');
+  // P10(key)
+  const p10 = createNode(`P{3,5,2,7,4,10,1,9,8,6}`);
+  // Split into two parts
+  const sp = createNode(`SP{2}`);
+  // LS-1
+  const [SEL_L, LS1_L] = Sequencial("SEL{0} LS{1}");
+  const [SEL_R, LS1_R] = Sequencial("SEL{1} LS{1}");
+  // LS-2
+  const LS2_L = createNode(`LS{2}`);
+  const LS2_R = createNode(`LS{2}`);
+  // Join
+  const join = createNode(`C`);
+  const join2 = createNode(`C`);
+  // P8
+  const p8 = createNode(`P{6,3,7,4,8,5,10,9}`);
+  const P8_2 = createNode(`P{6,3,7,4,8,5,10,9}`);
+  // Then we get k1
+  const k1 = Output('k1');
+  const k2 = Output('k2');
+  // connect nodes
+  p10.from(key_input).to(sp);
+  sp.to(SEL_L, SEL_R);
+  SEL_L.to(LS1_L);
+  LS1_L.to(join);
+  SEL_R.to(LS1_R);
+  LS1_R.to(join);
+  join.to(p8);
+  p8.to(k1);
+
+  // k2
+  LS1_L.to(LS2_L); //TODO check why this cause problem
+  LS1_R.to(LS2_R);
+  LS2_L.to(join2);
+  LS2_R.to(join2);
+  join2.to(P8_2);
+  P8_2.to(k2);
+
+  return { key_input, p10, sp, SEL_L, LS1_L, SEL_R, LS1_R, join, p8, k1, LS2_L, LS2_R, join2, P8_2, k2 }
+})
+
 const key = Bits.from("1,0,1,0,0,0,0,0,1,0")
-const key_input = Literal(key);
-// P10(key)
-const p10 = createNode(`P{3,5,2,7,4,10,1,9,8,6}`);
-// Split into two parts
-const sp = createNode(`SP{2}`);
-// LS-1
-const [SEL_L, LS1_L] = Sequencial("SEL{0} LS{1}");
-const [SEL_R, LS1_R] = Sequencial("SEL{1} LS{1}");
-// LS-2
-const LS2_L = createNode(`LS{2}`);
-const LS2_R = createNode(`LS{2}`);
-// Join
-const join = createNode(`C`);
-// const join2 = createNode(`C`);
-// P8
-const p8 = createNode(`P{6,3,7,4,8,5,10,9}`);
-// const P8_2 = createNode(`P{6,3,7,4,8,5,10,9}`);
-// Then we get k1
-const k1 = Output('k1');
-// const k2 = Output('k2');
-// connect nodes
-p10.from(key_input).to(sp);
-sp.to(SEL_L, SEL_R);
-SEL_L.to(LS1_L);
-LS1_L.to(join);
-SEL_R.to(LS1_R);
-LS1_R.to(join);
-join.to(p8);
-p8.to(k1);
+keygen.run_with_input({ key });
+const [k1, k2] = keygen.retrive_bits_results('k1', 'k2')
+console.log(`k1: `, k1);
+console.log(`k2: `, k2);
 
-// k2
-LS1_L.to(LS2_L); //TODO check why this cause problem
-LS1_R.to(LS2_R);
-// LS2_L.to(join2);
-// LS2_R.to(join2);
-// join2.to(P8_2);
-// P8_2.to(k2);
 
-const graph = ComputationalGraph.of(key_input, p10, sp, SEL_L, LS1_L, SEL_R, LS1_R, join, p8, k1, LS2_L, LS2_R);
-graph.run();
-console.log(graph.retrive_result('k1')[0].join(''));
-// console.log(graph.retrive_result('k2')[0].join(''));
+const plaintext = Bits.from("1,0,0,0,0,0,0,1")
+const des = ComputationalGraph.scope(() => {
+  const plain_text = Input('plaintext')
+  const k1 = Input('k1')
+  const k2 = Input('k2')
+  const ip_1 = createNode(`P{2,6,3,1,4,8,5,7}`);
+  const ip_1_reversed = createNode(`P{4,1,3,5,7,2,8,6}`);
+  const SP_0 = createNode(`SP{2}`);
+  const left = createNode(`SEL{0}`);
+  const right = createNode(`SEL{1}`);
+  const sbox0_str = "1 0 3 2; 3 2 1 0; 0 2 1 3; 3 1 3 2";
+  const [EP, XOR_0, SP_1, S0, P4, XOR_1] = Sequencial(`EP{4,1,2,3,2,3,4,1} XOR SP{2} SBOX{${sbox0_str}} P{2,4,3,1} XOR`);
+  // add missing nodes to sequencial part
+  const sbox1_str = "0 1 2 3; 2 0 1 3; 3 0 1 0; 2 1 0 3";
+  const S1 = createNode(`SBOX{${sbox1_str}}`);
+  const Cat_s0_s1 = createNode(`C`);
+  const sw = createNode(`SW`);
+  // connect nodes
+  ip_1.from(plain_text);
+  ip_1.to(SP_0);
+  SP_0.to(left, right);
+  left.to(XOR_1)
+  right.to(EP);
+  EP.to(XOR_0);
+  k1.to(XOR_0);
+  XOR_0.to(SP_1);
+  SP_1.to(S0, S1);
+  S0.to(Cat_s0_s1);
+  S1.to(Cat_s0_s1);
+  Cat_s0_s1.to(P4);
+  P4.to(XOR_1);
+
+  XOR_1.to(sw);
+  right.to(sw);
+
+  return { plain_text, k1, k2, ip_1, ip_1_reversed, SP_0, left, right, EP, XOR_0, SP_1, S0, P4, XOR_1, S1, Cat_s0_s1, sw }
+})
