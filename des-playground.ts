@@ -1,140 +1,13 @@
-import { Number, Test, Object, List } from "ts-toolbelt"
 import { unwarpDeep } from "./helper";
+import { _Output, Add, And, Concat, Copy, ExpandPermutation, Input, Not, NotImplemented, Op, OpGroup, Or, Permutation, Select, ShiftLeft, ShiftRight, Split, Xor } from "./ops/operators";
+import { NonEmptyArray, EmptyableArray } from "./type.helper";
 
-type TupleOf<T, N extends number> = N extends N ? number extends N ? T[] : _TupleOf<T, N, []> : never;
-type _TupleOf<T, N extends number, R extends unknown[]> = R['length'] extends N ? R : _TupleOf<T, N, [T, ...R]>;
-
-type Bits<Length extends number> = TupleOf<0 | 1, Length>;
-
-
-abstract class Op<T = any, R = any> {
-  constructor() { }
-  abstract apply(input: T): R;
-  withArgs(..._args: any[]) { }
-}
-
-class Add<L extends number> extends Op<[Bits<L>, Bits<L>], [Bits<L>]> {
-  apply([a, b]: [Bits<L>, Bits<L>]): [Bits<L>] {
-    // lower is on the right
-    let carry = 0;
-    const result = a;
-    for (let i = a.length - 1; i >= 0; i--) {
-      const sum = a[i] + b[i] + carry;
-      result[i] = sum % 2 as any;
-      carry = sum > 1 ? 1 : 0;
-    }
-    return [result] as [Bits<L>];
-  }
-}
-
-class Concat<L extends number, R extends number> extends Op<[Bits<L>, Bits<R>], [Bits<Number.Add<L, R>>]> {
-  apply([a, b]: [Bits<L>, Bits<R>]): [Bits<Number.Add<L, R>>] {
-    return [[...a, ...b]] as [Bits<Number.Add<L, R>>];
-  }
-}
-
-class ShiftLeft<L extends number> extends Op<[Bits<L>], [Bits<L>]> {
-  _n_digits: number = 0;
-  withArgs(...args: any[]) {
-    this._n_digits = args[0];
-  }
-  // circular shift
-  apply(input: [Bits<L>]): [Bits<L>] {
-    const n = this._n_digits;
-    return [[...input[0].slice(n), ...input[0].slice(0, n)]] as [Bits<L>];
-  }
-}
-
-class ShiftRight<L extends number> extends Op<[Bits<L>], [Bits<L>]> {
-  _n_digits: number = 0;
-  withArgs(...args: any[]) {
-    this._n_digits = args[0];
-  }
-  // circular shift
-  apply(input: [Bits<L>]): [Bits<L>] {
-    const n = this._n_digits;
-    return [[...input[0].slice(-n), ...input[0].slice(0, -n)]] as [Bits<L>];
-  }
-}
-
-// actually it's a permutation, nothing different
-class ExpandPermutation<L extends number, P extends number> extends Op<[Bits<L>], [Bits<P>]> {
-  // @ts-ignore
-  _permutation: TupleOf<number, L>
-  withArgs(...args: any[]) {
-    this._permutation = args as TupleOf<number, L>
-  }
-  apply(input: [Bits<L>]): [Bits<P>] {
-    // if min of permutation is 1, minus 1
-    const min = Math.min(...this._permutation);
-    if (min === 1) {
-      this._permutation = this._permutation.map((p) => p - 1) as any;
-    }
-    const result = new Array(input[0].length);
-    for (let i = 0; i < this._permutation.length; i++) {
-      result[i] = input[0][this._permutation[i]];
-    }
-    return [result] as [Bits<P>];
-  }
-}
-
-class Permutation<L extends number> extends Op<[Bits<L>], [Bits<L>]> {
-  _permutation: number[] = [];
-  withArgs(...args: any[]) {
-    this._permutation = args as number[];
-  }
-  apply(input: [Bits<L>]): [Bits<L>] {
-    // if min of permutation is 1, minus 1
-    const min = Math.min(...this._permutation);
-    if (min === 1) {
-      this._permutation = this._permutation.map((p) => p - 1);
-    }
-
-    const result = new Array(input[0].length);
-    for (let i = 0; i < this._permutation.length; i++) {
-      result[i] = input[0][this._permutation[i]];
-    }
-    return [result] as [Bits<L>];
-  }
-}
-
-class Not<L extends number> extends Op<[Bits<L>], [Bits<L>]> {
-  apply(input: [Bits<L>]): [Bits<L>] {
-    return [input[0].map((bit) => bit ^ 1)] as [Bits<L>];
-  }
-}
-
-class And<L extends number> extends Op<[Bits<L>, Bits<L>], [Bits<L>]> {
-  apply([a, b]: [Bits<L>, Bits<L>]): [Bits<L>] {
-    return [a.map((bit, i) => bit & b[i])] as [Bits<L>];
-  }
-}
-
-class Or<L extends number> extends Op<[Bits<L>, Bits<L>], [Bits<L>]> {
-  apply([a, b]: [Bits<L>, Bits<L>]): [Bits<L>] {
-    return [a.map((bit, i) => bit | b[i])] as [Bits<L>];
-  }
-}
-
-class Xor<L extends number> extends Op<[Bits<L>, Bits<L>], [Bits<L>]> {
-  apply([a, b]: [Bits<L>, Bits<L>]): [Bits<L>] {
-    return [a.map((bit, i) => bit ^ b[i])] as [Bits<L>];
-  }
-}
-
-class OpGroup<T extends NonEmptyArray<unknown>, R extends NonEmptyArray<unknown>> extends Op<T, R> {
-  constructor(private ops: Op[]) {
-    super();
-  }
-
-  apply(input: T): R {
-    let result = input as any;
-    this.ops.forEach((op) => {
-      result = op.apply(result);
-    });
-    return result as R;
-  }
-}
+type ComputationalNodesInputType<T extends NonEmptyArray<unknown>> = {
+  [K in keyof T]: ComputationalNode<NonEmptyArray<unknown>, [T[K], ...EmptyableArray<unknown>]>
+};
+type ComputationalNodesOutputType<R extends NonEmptyArray<unknown>> = {
+  [K in keyof R]: ComputationalNode<[R[K], ...EmptyableArray<unknown>], NonEmptyArray<unknown>>
+};
 
 class SubGraph<T extends NonEmptyArray<unknown>, R extends NonEmptyArray<unknown>> extends Op<T, R> {
   graph: ComputationalGraph
@@ -149,42 +22,6 @@ class SubGraph<T extends NonEmptyArray<unknown>, R extends NonEmptyArray<unknown
   }
 }
 
-class _Output<L extends number> extends Op<[Bits<L>], [Bits<L>]> {
-  memory: any
-  apply(input: [Bits<L>]): [Bits<L>] {
-    this.memory = input;
-    return input;
-  }
-}
-
-class Input<L extends number> extends Op<[], [Bits<L>]> {
-  constructor(val?: any) {
-    super();
-    this.memory = val;
-  }
-
-  memory: any
-  apply(): [Bits<L>] {
-    return [this.memory] as [Bits<L>];
-  }
-}
-
-class NotImplemented extends Op {
-  apply() {
-    throw new Error('Not implemented');
-  }
-}
-
-type NonEmptyArray<T> = [T, ...T[]];
-type EmptyableArray<T> = [...T[]];
-type ComputationalNodesInputType<T extends NonEmptyArray<unknown>> = {
-  [K in keyof T]: ComputationalNode<NonEmptyArray<unknown>, [T[K], ...EmptyableArray<unknown>]>
-};
-type ComputationalNodesOutputType<R extends NonEmptyArray<unknown>> = {
-  [K in keyof R]: ComputationalNode<[R[K], ...EmptyableArray<unknown>], NonEmptyArray<unknown>>
-};
-
-
 const ops = {
   add: Add,
   cat: Concat,
@@ -194,6 +31,9 @@ const ops = {
   and: And,
   or: Or,
   xor: Xor,
+  copy: Copy,
+  select: Select,
+  split: Split,
   permutation: Permutation,
   expandPermutation: ExpandPermutation,
   // output: Output,
@@ -228,7 +68,6 @@ class ComputationalNode<T extends NonEmptyArray<unknown>, R extends NonEmptyArra
       this.children[i] = node;
       node.parent.push(this);
     });
-    return this;
   }
 }
 
@@ -236,8 +75,10 @@ function Literal(val: any) {
   return new ComputationalNode(new Input(val));
 }
 
-function Output() {
-  return new ComputationalNode(new _Output());
+function Output(name: string = '') {
+  const out = new _Output()
+  out.withArgs(name);
+  return new ComputationalNode(out);
 }
 
 function createOpByName(name: keyof typeof ops) {
@@ -300,8 +141,14 @@ class ComputationalGraph {
         graph.addOutputNode(node);
       }
     });
+
+    console.log(`created a graph with ${graph.nodes.length} nodes, ${graph.inputNodes.size} input nodes, ${graph.outputNodes.size} output nodes`)
+    console.log(`input nodes: `, graph.inputNodes);
+    console.log(`output nodes: `, graph.outputNodes);
     return graph;
   }
+
+  named_results = new Map<string, any>();
 
   // run according to the topological order
   run() {
@@ -318,10 +165,10 @@ class ComputationalGraph {
       // assume we can always get the result from cache
       // if not, then it's not a valid graph (not a DAG)
       const input = node.parent.map((parent) => cache.get(parent));
-      // console.log(`in : `, input);
-      // console.log(`in (unwarp): `, unwarpDeep(input));
+      console.log(`current running Op: `, node.op.constructor.name);
+      console.log(`in (unwarp): `, unwarpDeep(input));
       const output = node.apply(...unwarpDeep(input));
-      // console.log(`out: `, output);
+      console.log(`out: `, output);
       cache.set(node, output);
       node.children.forEach((child) => {
         set.add(child);
@@ -332,12 +179,19 @@ class ComputationalGraph {
     const result = [] as any[];
     this.outputNodes.forEach((node) => {
       result.push(cache.get(node));
+      if (node.op instanceof _Output && node.op.name !== '') {
+        this.named_results.set(node.op.name, cache.get(node));
+      }
     });
 
     // console.log(result);
     console.log(JSON.stringify(result, null, 2));
 
     return result;
+  }
+
+  retrive_result(name: string) {
+    return this.named_results.get(name);
   }
 
   run_with_input(input: Map<ComputationalNode<any, any>, any>) {
@@ -372,7 +226,11 @@ class ShortHandParser {
   }
 }
 
-
+class Bits {
+  static from(s: string) {
+    return s.split(',').map(c => parseInt(c));
+  }
+}
 // Test
 // const i = Literal([1, 0, 0, 1])
 // const j = Literal([0, 1, 0, 1])
@@ -388,10 +246,10 @@ class ShortHandParser {
 
 
 function parseOp(input: string) {
-  const match = input.match(/^(\w+)\{(.+?)\}$/);
+  const match = input.match(/^(\w+)(?:\{(.+?)\})?$/);
   if (match) {
     const [, name, paramsStr] = match;
-    const params = tryParseArgs(paramsStr) || [];
+    const params = paramsStr ? tryParseArgs(paramsStr) || [] : [];
     return { name, params };
   }
   return null;
@@ -410,24 +268,31 @@ const alias: {
   NOT: 'not',
   EP: 'expandPermutation',
   P: 'permutation',
+  SP: 'split',
+  SEL: 'select',
 } as const;
 
-function createOpInstance(input: string) {
+function createOp(input: string) {
   const op = parseOp(input);
   if (op) {
     // @ts-ignore
     if (ops[alias[op.name]]) {
-      console.log(`Creating op: ${op.name} with params: ${op.params}`);
+      console.log(`Creating op: ${op.name} with params: ${op.params ?? "<empty>"}`);
       const oprand = createOpByName(alias[op.name]);
       oprand.withArgs(...op.params);
       return oprand;
     } else {
-      console.error(`Unknown op: ${op.name}`);
-      return null
+      throw new Error(`Unknown op: ${op.name}`);
     }
   }
-  return op;
+  throw new Error(`Failed to parse op: ${input}`);
 }
+
+function createNode(input: string) {
+  const op = createOp(input);
+  return new ComputationalNode(op as any);
+}
+
 type Argument = number[] | number[][];
 
 function parseArray(input: string): number[] | null {
@@ -458,18 +323,64 @@ function tryParseArgs(input: string): Argument | null {
   return null;
 }
 
-function Sequencial(init_str: string) {
-  const ops = init_str.split(/\s+/).map(createOpInstance);
+function Sequencial<T extends string>(init_str: T) {
+  const ops = init_str.split(/\s+/).map(createOp);
   if (ops.length === 0 || ops.some(op => op === null)) {
     throw new Error('Not valid ops list');
   }
-  // create OpGroup
-  return new OpGroup(ops as any);
+  // create computational nodes
+  // @ts-ignore op is not null
+  const nodes = ops.map(op => new ComputationalNode(op));
+  // connect nodes
+  nodes.reduce((prev, current) => {
+    prev.to(current);
+    return current;
+  });
+
+  return nodes
 }
 
+// simple DES generate key
+const key = Bits.from("1,0,1,0,0,0,0,0,1,0")
+const key_input = Literal(key);
+// P10(key)
+const p10 = createNode(`P{3,5,2,7,4,10,1,9,8,6}`);
+// Split into two parts
+const sp = createNode(`SP{2}`);
+// LS-1
+const [SEL_L, LS1_L] = Sequencial("SEL{0} LS{1}");
+const [SEL_R, LS1_R] = Sequencial("SEL{1} LS{1}");
+// LS-2
+const LS2_L = createNode(`LS{2}`);
+const LS2_R = createNode(`LS{2}`);
+// Join
+const join = createNode(`C`);
+// const join2 = createNode(`C`);
+// P8
+const p8 = createNode(`P{6,3,7,4,8,5,10,9}`);
+// const P8_2 = createNode(`P{6,3,7,4,8,5,10,9}`);
+// Then we get k1
+const k1 = Output('k1');
+// const k2 = Output('k2');
+// connect nodes
+p10.from(key_input).to(sp);
+sp.to(SEL_L, SEL_R);
+SEL_L.to(LS1_L);
+LS1_L.to(join);
+SEL_R.to(LS1_R);
+LS1_R.to(join);
+join.to(p8);
+p8.to(k1);
 
-const sequencial = Sequencial("P{2,1,3,4} LS{3} EP{4,1,2,3,2,3,4,1}"); 
-console.log(sequencial.apply([[1, 0, 0, 1]]));
-// after P: [0, 1, 0, 1]
-// after LS: [1, 0, 1, 0]
-// after EP: [0, 1, 0, 1, 0, 1, 0, 1]
+// k2
+LS1_L.to(LS2_L); //TODO check why this cause problem
+LS1_R.to(LS2_R);
+// LS2_L.to(join2);
+// LS2_R.to(join2);
+// join2.to(P8_2);
+// P8_2.to(k2);
+
+const graph = ComputationalGraph.of(key_input, p10, sp, SEL_L, LS1_L, SEL_R, LS1_R, join, p8, k1, LS2_L, LS2_R);
+graph.run();
+console.log(graph.retrive_result('k1')[0].join(''));
+// console.log(graph.retrive_result('k2')[0].join(''));
