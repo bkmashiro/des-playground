@@ -455,6 +455,13 @@ const des = ComputationalGraph.scope(() => {
   S1.to(Cat_s0_s1);
 
   Cat_s0_s1.to(P4);
+  P4.to(XOR_1);
+  left.to(XOR_1);
+
+  XOR_1.to(sw);
+  right.to(sw);
+
+  sw.to(tmp_out_1);
 
   return { plain_text, k1, ip_1, tmp_out_1, tmp_out_2, EP, SP_0, right, XOR_0 }
 })
