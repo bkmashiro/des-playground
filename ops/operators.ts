@@ -157,12 +157,10 @@ class Split<L extends number> extends Op<[Bits<L>], Bits<any>[]> {
 class SBox extends Op<[Bits<any>], [Bits<any>]> {
   _sbox: number[][] = [];
   withArgs(...args: any[]) {
-    const str = args[0];
-    const rows = str.split(';');
-    // , or space as separator
-    this._sbox = rows.map((row: string) => row.split(
-      row.includes(',') ? ',' : ' '
-    ).map((n) => parseInt(n)));
+    const vals = args as number[]
+    const n = Math.sqrt(vals.length);
+    console.log(n, vals);
+    this._sbox = new Array(n).fill(0).map((_, i) => vals.slice(i * n, (i + 1) * n));
   }
 
   apply(input: [Bits<any>]): [Bits<any>] {
@@ -171,9 +169,9 @@ class SBox extends Op<[Bits<any>], [Bits<any>]> {
     const col = input[0][1] * 2 + input[0][2];
     const value = this._sbox[row][col];
     // convert to binary
-    const result = new Array(4).fill(0);
-    for (let i = 0; i < 4; i++) {
-      result[3 - i] = value >> i & 1;
+    const result = new Array(2).fill(0);
+    for (let i = 0; i < 2; i++) {
+      result[i] = value >> i & 1;
     }
     return [result] as [Bits<any>];
   }

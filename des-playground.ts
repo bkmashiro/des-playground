@@ -179,12 +179,31 @@ class ComputationalGraph {
       set.delete(node);
       // assume we can always get the result from cache
       // if not, then it's not a valid graph (not a DAG)
+      let can_calculate = true;
+      for (const p of node.parent) {
+        if (!cache.has(p)) {
+          // cannot calculate the result of this node now,
+          // put it back to the set
+          set.add(node);
+          // trying to calculate other nodes
+          can_calculate = false;
+        }
+      }
+      if (!can_calculate) {
+        continue;
+      }
+
       const input = node.parent.map((parent) => cache.get(parent));
+
       console.log(`current running Op: `, node.op.constructor.name);
-      // console.log(`in (unwarp): `, unwarpDeep(input));
+      console.log(`in (unwarp): `, unwarpDeep(input));
       const output = node.apply(...unwarpDeep(input));
-      // console.log(`out: `, output);
+      console.log(`out: `, output);
       cache.set(node, output);
+      // log cache
+      // for (const [key, value] of cache.entries()) {
+      //   console.log(`cache: `, key.op.constructor.name, value);
+      // }
       node.children.forEach((child) => {
         set.add(child);
       });
@@ -200,7 +219,7 @@ class ComputationalGraph {
     });
 
     // console.log(result);
-    console.log(JSON.stringify(result, null, 2));
+    // console.log(JSON.stringify(result, null, 2));   
 
     return result;
   }
@@ -243,32 +262,11 @@ class ComputationalGraph {
  * SELECT[n] - select the nth element in the parameters list
  * EP{2,3,1,4,2,3,4,1} - expand permutation
  */
-class ShortHandParser {
-  constructor() { }
-
-  parse() {
-
-  }
-}
-
 class Bits {
   static from(s: string) {
     return s.split(',').map(c => parseInt(c));
   }
 }
-// Test
-// const i = Literal([1, 0, 0, 1])
-// const j = Literal([0, 1, 0, 1])
-// const k = Literal([0, 0, 1, 1])
-
-// const add = From(i, j).to('add');
-// const cat = From(add, k).to('cat');
-// const output = From(cat).to('out');
-
-// const graph = ComputationalGraph.of(i, j, k, add, cat, output);
-
-// graph.run();
-
 
 function parseOp(input: string) {
   const match = input.match(/^(\w+)(?:\{(.+?)\})?$/);
@@ -350,7 +348,8 @@ function tryParseArgs(input: string): Argument | null {
   return null;
 }
 
-function Sequencial<T extends string>(init_str: T) {
+function Sequencial<T extends string>(init_str: T, connect: boolean = false) {
+  // const ops = init_str.split(/\s+/).map(createOp);
   const ops = init_str.split(/\s+/).map(createOp);
   if (ops.length === 0 || ops.some(op => op === null)) {
     throw new Error('Not valid ops list');
@@ -359,10 +358,12 @@ function Sequencial<T extends string>(init_str: T) {
   // @ts-ignore op is not null
   const nodes = ops.map(op => new ComputationalNode(op));
   // connect nodes
-  nodes.reduce((prev, current) => {
-    prev.to(current);
-    return current;
-  });
+  if (connect) {
+    nodes.reduce((prev, current) => {
+      prev.to(current);
+      return current;
+    });
+  }
 
   return nodes
 }
@@ -420,17 +421,19 @@ console.log(`k2: `, k2);
 const plaintext = Bits.from("1,0,0,0,0,0,0,1")
 const des = ComputationalGraph.scope(() => {
   const plain_text = Input('plaintext')
+  const tmp_out_1 = Output('tmp1')
+  const tmp_out_2 = Output('tmp2')
   const k1 = Input('k1')
-  const k2 = Input('k2')
+  // const k2 = Input('k2')
   const ip_1 = createNode(`P{2,6,3,1,4,8,5,7}`);
-  const ip_1_reversed = createNode(`P{4,1,3,5,7,2,8,6}`);
+  // const ip_1_reversed = createNode(`P{4,1,3,5,7,2,8,6}`);
   const SP_0 = createNode(`SP{2}`);
   const left = createNode(`SEL{0}`);
   const right = createNode(`SEL{1}`);
-  const sbox0_str = "1 0 3 2; 3 2 1 0; 0 2 1 3; 3 1 3 2";
-  const [EP, XOR_0, SP_1, S0, P4, XOR_1] = Sequencial(`EP{4,1,2,3,2,3,4,1} XOR SP{2} SBOX{${sbox0_str}} P{2,4,3,1} XOR`);
-  // add missing nodes to sequencial part
-  const sbox1_str = "0 1 2 3; 2 0 1 3; 3 0 1 0; 2 1 0 3";
+  const sbox0_str = "1,0,3,2,3,2,1,0,0,2,1,3,3,1,3,2";
+  const [EP, XOR_0, SP_1, SEL_0, S0, P4, XOR_1] = Sequencial(`EP{4,1,2,3,2,3,4,1} XOR SP{2} SEL{0} SBOX{${sbox0_str}} P{2,4,3,1} XOR`);
+  const SEL_1 = createNode(`SEL{1}`);
+  const sbox1_str = "0,1,2,3,2,0,1,3,3,0,1,0,2,1,0,3";
   const S1 = createNode(`SBOX{${sbox1_str}}`);
   const Cat_s0_s1 = createNode(`C`);
   const sw = createNode(`SW`);
@@ -438,19 +441,63 @@ const des = ComputationalGraph.scope(() => {
   ip_1.from(plain_text);
   ip_1.to(SP_0);
   SP_0.to(left, right);
-  left.to(XOR_1)
   right.to(EP);
-  EP.to(XOR_0);
   k1.to(XOR_0);
+  EP.to(XOR_0);
+
   XOR_0.to(SP_1);
-  SP_1.to(S0, S1);
+  SP_1.to(SEL_0, SEL_1);
+
+  SEL_0.to(S0)
+  SEL_1.to(S1)
+
   S0.to(Cat_s0_s1);
   S1.to(Cat_s0_s1);
+
   Cat_s0_s1.to(P4);
-  P4.to(XOR_1);
 
-  XOR_1.to(sw);
-  right.to(sw);
-
-  return { plain_text, k1, k2, ip_1, ip_1_reversed, SP_0, left, right, EP, XOR_0, SP_1, S0, P4, XOR_1, S1, Cat_s0_s1, sw }
+  return { plain_text, k1, ip_1, tmp_out_1, tmp_out_2, EP, SP_0, right, XOR_0 }
 })
+
+des.run_with_input({ plaintext, k1, k2 })
+
+console.log(des.retrive_bits_results('tmp1', 'tmp2'));
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// left.to(XOR_1)
+// right.to(EP);
+// EP.to(XOR_0);
+// k1.to(XOR_0);
+// XOR_0.to(SP_1);
+// SP_1.to(S0, S1);
+// S0.to(Cat_s0_s1);
+// S1.to(Cat_s0_s1);
+// Cat_s0_s1.to(P4);
+// P4.to(XOR_1);
+
+// XOR_1.to(sw);
+// right.to(sw);
