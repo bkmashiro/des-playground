@@ -70,6 +70,7 @@ class ComputationalNode<T extends NonEmptyArray<unknown>, R extends NonEmptyArra
       this.children.push(node);
       node.parent.push(this);
     });
+    return this;
   }
 }
 
@@ -419,6 +420,47 @@ console.log(`k2: `, k2);
 
 
 const plaintext = Bits.from("1,0,0,0,0,0,0,1")
+
+const f_k = ComputationalGraph.scope(() => {
+  const k = Input('k')
+  const l = Input('l')
+  const r = Input('r')
+  const EP = createNode(`EP{4,1,2,3,2,3,4,1}`);
+  const XOR_0 = createNode(`XOR`);
+  const SP_0 = createNode(`SP{2}`);
+  const SP_0_L = createNode(`SEL{0}`);
+  const SP_0_R = createNode(`SEL{1}`);
+  const SBox0 = createNode(`SBOX{1,0,3,2,3,2,1,0,0,2,1,3,3,1,3,2}`);
+  const SBox1 = createNode(`SBOX{0,1,2,3,2,0,1,3,3,0,1,0,2,1,0,3}`);
+  const cat = createNode(`C`);
+  const P4 = createNode(`P{2,4,3,1}`);
+  const XOR_1 = createNode(`XOR`);
+  const out_l = Output('l');
+  const out_r = Output('r');
+  // connect nodes
+  k.to(XOR_0)
+  l.to(XOR_1)
+  r.to(out_r,
+    EP.to(
+      XOR_0.to(
+        SP_0.to(
+          SP_0_L.to(
+            SBox0.to(cat)
+          ),
+          SP_0_R.to(
+            SBox1.to(cat)
+          )
+        )
+      )
+    )
+  );
+  cat.to(P4);
+  P4.to(XOR_1);
+  XOR_1.to(out_l);
+  return { k, l, r, EP, XOR_0, SP_0, SP_0_L, SP_0_R, SBox0, SBox1, cat, P4, XOR_1 }
+})
+
+
 const des = ComputationalGraph.scope(() => {
   const plain_text = Input('plaintext')
   const tmp_out_1 = Output('tmp1')
@@ -461,7 +503,9 @@ const des = ComputationalGraph.scope(() => {
   XOR_1.to(sw);
   right.to(sw);
 
-  sw.to(tmp_out_1);
+  const sw_l = createNode(`SEL{0}`);
+  const sw_r = createNode(`SEL{1}`);
+  sw.to(sw_l, sw_r);
 
   return { plain_text, k1, ip_1, tmp_out_1, tmp_out_2, EP, SP_0, right, XOR_0 }
 })

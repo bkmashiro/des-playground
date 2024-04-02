@@ -165,6 +165,7 @@ class SBox extends Op<[Bits<any>], [Bits<any>]> {
 
   apply(input: [Bits<any>]): [Bits<any>] {
     // 1st, 4th bit as row, 2nd, 3rd bit as column
+    // console.log(this._sbox);
     const row = input[0][0] * 2 + input[0][3];
     const col = input[0][1] * 2 + input[0][2];
     const value = this._sbox[row][col];
@@ -173,6 +174,9 @@ class SBox extends Op<[Bits<any>], [Bits<any>]> {
     for (let i = 0; i < 2; i++) {
       result[i] = value >> i & 1;
     }
+    // reverse
+    result.reverse();
+    console.log(`(${row}, ${col}) => ${value} => 0b[${result}]`);
     return [result] as [Bits<any>];
   }
 }
