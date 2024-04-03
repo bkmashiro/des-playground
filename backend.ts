@@ -123,11 +123,22 @@ class ComputationalGraph {
     return graph;
   }
 
-  static scope(scoped: () => {
+  static scope(scoped: ({ }: {}) => {
     [key: string]: ComputationalNode<any, any>
   }) {
-    const nodes = scoped();
-    return this.of(...Object.values(nodes));
+    const nodes = scoped({});
+    const g = new ComputationalGraph();
+    for (const key in nodes) {
+      const node = nodes[key];
+      g.addNode(node);
+      if (node.parent.length === 0) {
+        g.addInputNode(node);
+      }
+      if (node.children.length === 0) {
+        g.addOutputNode(node);
+      }
+    } 
+    return g;
   }
 
   named_results = new Map<string, any>();
