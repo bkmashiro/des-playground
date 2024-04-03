@@ -57,13 +57,12 @@ class ExpandPermutation<L extends number, P extends number> extends Op<[Bits<L>]
   _permutation: TupleOf<number, L>
   withArgs(...args: any[]) {
     this._permutation = args as TupleOf<number, L>
-  }
-  apply(input: [Bits<L>]): [Bits<P>] {
-    // if min of permutation is 1, minus 1
     const min = Math.min(...this._permutation);
     if (min === 1) {
       this._permutation = this._permutation.map((p) => p - 1) as any;
     }
+  }
+  apply(input: [Bits<L>]): [Bits<P>] {
     const result = new Array(input[0].length);
     for (let i = 0; i < this._permutation.length; i++) {
       result[i] = input[0][this._permutation[i]];
@@ -76,11 +75,9 @@ class Permutation<L extends number> extends Op<[Bits<L>], [Bits<any>]> {
   _permutation: number[] = [];
   withArgs(...args: any[]) {
     this._permutation = args as number[];
+    this._permutation = this._permutation.map((p) => p - 1);
   }
   apply(input: [Bits<L>]): [Bits<L>] {
-    // if min of permutation is 1, minus 1
-    this._permutation = this._permutation.map((p) => p - 1);
-
     const result = new Array(this._permutation.length);
     for (let i = 0; i < this._permutation.length; i++) {
       result[i] = input[0][this._permutation[i]];

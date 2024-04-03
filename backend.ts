@@ -18,7 +18,7 @@ class SubGraph<T extends NonEmptyArray<unknown>, R extends NonEmptyArray<unknown
   }
 
   apply(input: T): R {
-    return this.graph.run_with_tuple_input(input) as R;
+    return unwarpDeep(this.graph.run_with_tuple_input(input)) as R;
   }
 }
 
@@ -196,8 +196,11 @@ class ComputationalGraph {
       }
 
       const input = node.parent.map((parent) => cache.get(parent));
-
-      console.log(`current running Op: `, node.op.constructor.name);
+      const extractArgs = (input: any) => {
+        const vals = Object.values(input);
+        return vals
+      }
+      console.log(`current running Op: `, node.op.constructor.name, extractArgs(node.op));
       console.log(`in: `, unwarpDeep(input));
       const output = node.apply(...unwarpDeep(input));
       console.log(`out: `, output);
@@ -255,6 +258,7 @@ class ComputationalGraph {
     _input_nodes.forEach((node, i) => {
       if (node.op instanceof _Input) {
         node.op._input = input[i];
+        console.log(`set input ${i} to `, input[i]);
       }
     })
     return this.run();
