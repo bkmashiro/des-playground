@@ -43,7 +43,7 @@ const ops = {
   __NOT_IMPLEMENTED__: NotImplemented,
 } as const;
 
-class ComputationalNode<T extends NonEmptyArray<unknown>, R extends NonEmptyArray<unknown>> {
+class ComputationalNode<T extends NonEmptyArray<unknown> = any, R extends NonEmptyArray<unknown> = any> {
   constructor(
     public op: Op<T, R>,
   ) { }
@@ -162,7 +162,23 @@ class ComputationalGraph {
       return node;
     }
 
-    return { Input, Output }
+    const map = new Map<string, ComputationalNode>();
+    const dim = (node: ComputationalNode<any, any>, name: string) => {
+      if (map.has(name)) {
+        throw new Error(`Duplicated name: ${name}`);
+      }
+      map.set(name, node);
+      return node!;
+    }
+
+    const ref = (name: string) => {
+      if (!map.has(name)) {
+        throw new Error(`Reference not found: ${name}`);
+      }
+      return map.get(name)!;
+    }
+
+    return { Input, Output, dim, ref }
   }
 
   named_results = new Map<string, any>();
@@ -270,7 +286,7 @@ class ComputationalGraph {
    * they share the same underlying ComputationalGraph instance.
    * @returns 
    */
-  asNode(){
+  asNode() {
     return new ComputationalNode(new SubGraph(this));
   }
 }

@@ -102,15 +102,15 @@ const DES = ComputationalGraph.scope(({ Input, Output }) => {
   )
   f_k_1.to(
     SW().to(
-      // Split(2).to(
       Select(0).to(f_k_2.from(Input('k2'))),
       Select(1).to(f_k_2),
-      // )
     )
   )
   f_k_2.to(
     Cat().to(
-      $.P_inverse([2, 6, 3, 1, 4, 8, 5, 7]).to(Output('ciphertext'))
+      $.P_inverse([2, 6, 3, 1, 4, 8, 5, 7]).to(
+        Output('ciphertext')
+      )
     )
   )
 })
