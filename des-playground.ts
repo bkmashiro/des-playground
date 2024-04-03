@@ -1,8 +1,8 @@
 import { Bits, ComputationalGraph, createNode, Sequencial } from "./backend";
-import { $, Cat, Input, Output, Select, Split, Xor } from "./shortcut";
+import { $, Cat, Select, Split, SW, Xor } from "./shortcut";
 
 
-const keygen = ComputationalGraph.scope(() => {
+const keygen = ComputationalGraph.scope(({ Input, Output }) => {
   // simple DES generate key
   const key_input = Input('key');
   // P10(key)
@@ -52,9 +52,8 @@ console.log(`k1: `, k1);
 console.log(`k2: `, k2);
 
 
-const plaintext = Bits.from("1,0,0,0,0,0,0,1")
 
-const f_k = ComputationalGraph.scope(() => {
+const F_k = ComputationalGraph.scope(({ Input, Output }) => {
   const k = Input('k')
   const l = Input('l')
   const r = Input('r')
@@ -68,7 +67,7 @@ const f_k = ComputationalGraph.scope(() => {
   const out_l = Output('l');
   const out_r = Output('r');
   // connect nodes
-  k.to(Xor())
+  k.to(XOR_0)
   l.to(XOR_1)
   r.to(
     out_r,
@@ -86,65 +85,90 @@ const f_k = ComputationalGraph.scope(() => {
     )
   );
   cat.to(P4.to(XOR_1.to(out_l)));
-  return {
-    k, l, r,
-    out_l, out_r,
-  }
 })
 
+F_k.run_with_input({ k: k1, l: [0, 0, 0, 1], r: [0, 1, 0, 0] })
 
-const des = ComputationalGraph.scope(() => {
-  const plain_text = Input('plaintext')
-  const tmp_out_1 = Output('tmp1')
-  const tmp_out_2 = Output('tmp2')
-  const k1 = Input('k1')
-  // const k2 = Input('k2')
-  const ip_1 = createNode(`P{2,6,3,1,4,8,5,7}`);
-  // const ip_1_reversed = createNode(`P{4,1,3,5,7,2,8,6}`);
-  const SP_0 = createNode(`SP{2}`);
-  const left = createNode(`SEL{0}`);
-  const right = createNode(`SEL{1}`);
-  const sbox0_str = "1,0,3,2,3,2,1,0,0,2,1,3,3,1,3,2";
-  const [EP, XOR_0, SP_1, SEL_0, S0, P4, XOR_1] = Sequencial(`EP{4,1,2,3,2,3,4,1} XOR SP{2} SEL{0} SBOX{${sbox0_str}} P{2,4,3,1} XOR`);
-  const SEL_1 = createNode(`SEL{1}`);
-  const sbox1_str = "0,1,2,3,2,0,1,3,3,0,1,0,2,1,0,3";
-  const S1 = createNode(`SBOX{${sbox1_str}}`);
-  const Cat_s0_s1 = createNode(`C`);
-  const sw = createNode(`SW`);
-  // connect nodes
-  ip_1.from(plain_text);
-  ip_1.to(SP_0);
-  SP_0.to(left, right);
-  right.to(EP);
-  k1.to(XOR_0);
-  EP.to(XOR_0);
-
-  XOR_0.to(SP_1);
-  SP_1.to(SEL_0, SEL_1);
-
-  SEL_0.to(S0)
-  SEL_1.to(S1)
-
-  S0.to(Cat_s0_s1);
-  S1.to(Cat_s0_s1);
-
-  Cat_s0_s1.to(P4);
-  P4.to(XOR_1);
-  left.to(XOR_1);
-
-  XOR_1.to(sw);
-  right.to(sw);
-
-  const sw_l = createNode(`SEL{0}`);
-  const sw_r = createNode(`SEL{1}`);
-  sw.to(sw_l, sw_r);
-
-  return { plain_text, k1, ip_1, tmp_out_1, tmp_out_2, EP, SP_0, right, XOR_0 }
+const DES = ComputationalGraph.scope(({ Input, Output }) => {
+  const f_k_1 = F_k.asNode()
+  const f_k_2 = F_k.asNode()
+  Input('plaintext').to(
+    $.P([2, 6, 3, 1, 4, 8, 5, 7]).to(
+      Split(2).to(
+        Select(0).to(f_k_1.from(Input('k1'))),
+        Select(1).to(f_k_1),
+      )
+    )
+  )
+  f_k_1.to(
+    SW().to(
+      Split(2).to(
+        Select(0).to(f_k_2.from(Input('k2'))),
+        Select(1).to(f_k_2),
+      )
+    )
+  )
+  f_k_2.to($.P_inverse([2, 6, 3, 1, 4, 8, 5, 7]).to(
+    Output('ciphertext')
+  ))
 })
 
-des.run_with_input({ plaintext, k1, k2 })
+const plaintext = Bits.from("1,0,0,0,0,0,0,1")
 
-console.log(des.retrive_bits_results('tmp1', 'tmp2'));
+console.log(F_k.retrive_bits_results('l', 'r'));
+
+// const des = ComputationalGraph.scope(({Input, Output}) => {
+//   const plain_text = Input('plaintext')
+//   const tmp_out_1 = Output('tmp1')
+//   const tmp_out_2 = Output('tmp2')
+//   const k1 = Input('k1')
+//   // const k2 = Input('k2')
+//   const ip_1 = createNode(`P{2,6,3,1,4,8,5,7}`);
+//   // const ip_1_reversed = createNode(`P{4,1,3,5,7,2,8,6}`);
+//   const SP_0 = createNode(`SP{2}`);
+//   const left = createNode(`SEL{0}`);
+//   const right = createNode(`SEL{1}`);
+//   const sbox0_str = "1,0,3,2,3,2,1,0,0,2,1,3,3,1,3,2";
+//   const [EP, XOR_0, SP_1, SEL_0, S0, P4, XOR_1] = Sequencial(`EP{4,1,2,3,2,3,4,1} XOR SP{2} SEL{0} SBOX{${sbox0_str}} P{2,4,3,1} XOR`);
+//   const SEL_1 = createNode(`SEL{1}`);
+//   const sbox1_str = "0,1,2,3,2,0,1,3,3,0,1,0,2,1,0,3";
+//   const S1 = createNode(`SBOX{${sbox1_str}}`);
+//   const Cat_s0_s1 = createNode(`C`);
+//   const sw = createNode(`SW`);
+//   // connect nodes
+//   ip_1.from(plain_text);
+//   ip_1.to(SP_0);
+//   SP_0.to(left, right);
+//   right.to(EP);
+//   k1.to(XOR_0);
+//   EP.to(XOR_0);
+
+//   XOR_0.to(SP_1);
+//   SP_1.to(SEL_0, SEL_1);
+
+//   SEL_0.to(S0)
+//   SEL_1.to(S1)
+
+//   S0.to(Cat_s0_s1);
+//   S1.to(Cat_s0_s1);
+
+//   Cat_s0_s1.to(P4);
+//   P4.to(XOR_1);
+//   left.to(XOR_1);
+
+//   XOR_1.to(sw);
+//   right.to(sw);
+
+//   const sw_l = createNode(`SEL{0}`);
+//   const sw_r = createNode(`SEL{1}`);
+//   sw.to(sw_l, sw_r);
+
+//   return { plain_text, k1, ip_1, tmp_out_1, tmp_out_2, EP, SP_0, right, XOR_0 }
+// })
+
+// des.run_with_input({ plaintext, k1, k2 })
+
+// console.log(des.retrive_bits_results('tmp1', 'tmp2'));
 
 
 

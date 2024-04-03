@@ -1,6 +1,5 @@
-import { ComputationalNode, createNode, createOpByName, ops } from "./backend";
-import { _Input, _Output } from "./ops/operators";
-import { NonEmptyArray } from "./type.helper";
+import { ComputationalGraph, ComputationalNode, createNode, createOpByName, ops } from "./backend";
+import { _Input, _Output, Permutation } from "./ops/operators";
 
 function Input(name: string) {
   const input = new _Input();
@@ -69,11 +68,23 @@ function P(args: number[]) {
   return createNode(`P{${args.join(',')}}`);
 }
 
-export const $ = {
+function P_inverse(args: number[]) {
+  // calculate the inverse of the permutation
+  const inverse = args.map((_, i) => args.indexOf(i + 1) + 1);
+  console.log(`inverse of ${args} is ${inverse}`);
+  return createNode(`P{${inverse.join(',')}}`);
+}
 
+function SW() {
+  return createNode(`SW`);
+}
+
+
+export const $ = {
   EP,
   SBox,
   P,
+  P_inverse,
 }
 
 export const $$ = {
@@ -82,10 +93,11 @@ export const $$ = {
 }
 
 export {
-  Input,
-  Output,
+  Input as _Input,
+  Output as _Output,
   Split,
   Select,
   Xor,
   Cat,
+  SW,
 }

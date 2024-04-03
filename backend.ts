@@ -18,7 +18,7 @@ class SubGraph<T extends NonEmptyArray<unknown>, R extends NonEmptyArray<unknown
   }
 
   apply(input: T): R {
-    return this.graph.run() as R;
+    return this.graph.run_with_tuple_input(input) as R;
   }
 }
 
@@ -123,11 +123,9 @@ class ComputationalGraph {
     return graph;
   }
 
-  static scope(scoped: ({ }: {}) => {
-    [key: string]: ComputationalNode<any, any>
-  }) {
-    const nodes = scoped({});
+  static scope(scoped: (stub: ReturnType<ComputationalGraph["getScopeStub"]>) => any) {
     const g = new ComputationalGraph();
+    const nodes = scoped(g.getScopeStub());
     for (const key in nodes) {
       const node = nodes[key];
       g.addNode(node);
@@ -137,8 +135,34 @@ class ComputationalGraph {
       if (node.children.length === 0) {
         g.addOutputNode(node);
       }
-    } 
+    }
+
+    console.log(`created a graph with ${g.inputNodes.size} input nodes, ${g.outputNodes.size} output nodes`)
+
     return g;
+  }
+
+  private getScopeStub() {
+    const g = this
+    const Input = (name: string) => {
+      const input = new _Input();
+      input.withArgs(name);
+      const node = new ComputationalNode(input);
+      g.addNode(node);
+      g.addInputNode(node);
+      return node;
+    }
+
+    const Output = (name: string = '') => {
+      const out = new _Output()
+      out.withArgs(name);
+      const node = new ComputationalNode(out);
+      g.addNode(node);
+      g.addOutputNode(node);
+      return node;
+    }
+
+    return { Input, Output }
   }
 
   named_results = new Map<string, any>();
@@ -174,7 +198,7 @@ class ComputationalGraph {
       const input = node.parent.map((parent) => cache.get(parent));
 
       console.log(`current running Op: `, node.op.constructor.name);
-      console.log(`in (unwarp): `, unwarpDeep(input));
+      console.log(`in: `, unwarpDeep(input));
       const output = node.apply(...unwarpDeep(input));
       console.log(`out: `, output);
       cache.set(node, output);
@@ -223,6 +247,27 @@ class ComputationalGraph {
       }
     });
     return this.run();
+  }
+
+  run_with_tuple_input(input: any[]) {
+    // since no name is provided, we assume the input nodes are in the same order as the input array
+    const _input_nodes = Array.from(this.inputNodes);
+    _input_nodes.forEach((node, i) => {
+      if (node.op instanceof _Input) {
+        node.op._input = input[i];
+      }
+    })
+    return this.run();
+  }
+
+  /**
+   * You must make sure the computationalGraph is a pure function,
+   * because is reused in the main graph, if multiple asNode is called,
+   * they share the same underlying ComputationalGraph instance.
+   * @returns 
+   */
+  asNode(){
+    return new ComputationalNode(new SubGraph(this));
   }
 }
 
