@@ -103,32 +103,6 @@ const DES = ComputationalGraph.scope(({ Input, Output }) => {
   )
 })
 
-// const DES_decrypt = ComputationalGraph.scope(({ Input, Output }) => {
-//   const f_k_1 = F_k.asNode()
-//   const f_k_2 = F_k.asNode()
-//   Input('ciphertext').to(
-//     $.P([2, 6, 3, 1, 4, 8, 5, 7]).to(
-//       Split(2).to(
-//         Select(0).to(f_k_2.from(Input('k2'))),
-//         Select(1).to(f_k_2),
-//       )
-//     )
-//   )
-//   f_k_2.to(
-//     SW().to(
-//       Select(0).to(f_k_1.from(Input('k1'))),
-//       Select(1).to(f_k_1),
-//     )
-//   )
-//   f_k_1.to(
-//     Cat().to(
-//       $.P_inverse([2, 6, 3, 1, 4, 8, 5, 7]).to(
-//         Output('plaintext')
-//       )
-//     )
-//   )
-// })
-
 export class SimpleDES {
   private k1: number[];
   private k2: number[];
@@ -152,7 +126,7 @@ export class SimpleDES {
     }
     DES.run_with_input({ plaintext, k1: this.k1, k2: this.k2 });
     // pick the first result, because we only have one output
-    return new Bits(DES.retrive_bits_results('ciphertext').at(0)) 
+    return DES.retrive_bits_results('ciphertext').at(0) as number[]
   }
 
   public decrypt(ciphertext: Bits) {
@@ -170,7 +144,7 @@ export class SimpleDES {
    */
   private _decrypt(ciphertext: number[]) {
     DES.run_with_input({ plaintext: ciphertext, k1: this.k2, k2: this.k1 });
-    return new Bits(DES.retrive_bits_results('ciphertext'))
+    return DES.retrive_bits_results('ciphertext') as number[]
   }
 
   get keys() {

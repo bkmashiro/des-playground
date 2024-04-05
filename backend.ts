@@ -263,7 +263,6 @@ class ComputationalGraph {
   }
 
   run_with_input(input: Record<string, any>) {
-    console.log(`@@@input`, input);
     // override the input nodes
     this.inputNodes.forEach((node) => {
       if (node.op instanceof _Input) {
@@ -364,8 +363,8 @@ class Bits {
     return new Bits(this.bits.concat(...bits.map(b => b.bits)));
   }
 
-  public append(...bits: Bits[]) {
-    this.bits.push(...bits.map(b => b.bits).flat());
+  public append(bits: number[]) {
+    this.bits.push(...bits.flat());
   }
 
   public set(index: number, value: number) {
