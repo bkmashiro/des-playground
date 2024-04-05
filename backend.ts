@@ -327,12 +327,22 @@ class Bits {
     return new Bits(s.split('').map(c => parseInt(c)));
   }
 
+  static fromArray(arr: number[]) {
+    return new Bits(arr);
+  }
+
   static fromNumber(n: number, length: number) {
     return new Bits(n.toString(2).padStart(length, '0').split('').map(c => parseInt(c)));
   }
 
   static fromUTF8(s: string) {
     return new Bits(new TextEncoder().encode(s).map(c => parseInt(c.toString(2).padStart(8, '0'))).join('').split('').map(c => parseInt(c)));
+  }
+
+  static fromU8Array(arr: Uint8Array) {
+    // convert to binary string
+    const bits = Array.from(arr).map(n => n.toString(2).padStart(8, '0')).join('').split('').map(c => parseInt(c));
+    return new Bits(bits);
   }
 
   toNumber() {
@@ -345,6 +355,27 @@ class Bits {
 
   toUTF8() {
     return new TextDecoder().decode(new Uint8Array(this.bits));
+  }
+
+  toU8Array() {
+    // each 8 bits as a number
+    const result: number[] = [];
+    for (let i = 0; i < this.bits.length; i += 8) {
+      result.push(parseInt(this.bits.slice(i, i + 8).join(''), 2));
+    }
+    return new Uint8Array(result);
+  }
+
+  split(n: number) {
+    const result = [] as number[][];
+    for (let i = 0; i < this.bits.length; i += n) {
+      result.push(this.bits.slice(i, i + n));
+    }
+    return result;
+  }
+
+  xor(b: Bits) {
+    return new Bits(this.bits.map((bit, i) => bit ^ b.bits[i]));
   }
 
   public get length(): number {
@@ -363,7 +394,7 @@ class Bits {
     return new Bits(this.bits.concat(...bits.map(b => b.bits)));
   }
 
-  public append(bits: number[]) {
+  public append(bits: readonly number[]) {
     this.bits.push(...bits.flat());
   }
 
@@ -379,6 +410,9 @@ class Bits {
     return new Bits();
   }
 
+  static XOR(a: Bits, b: Bits) {
+    return new Bits(a.bits.map((bit, i) => bit ^ b.bits[i]));
+  }
 }
 
 function parseOp(input: string) {
