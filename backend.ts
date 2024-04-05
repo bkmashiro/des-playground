@@ -21,7 +21,12 @@ class SubGraph<T extends NonEmptyArray<unknown>, R extends NonEmptyArray<unknown
     return unwarpDeep(this.graph.run_with_tuple_input(input)) as R;
   }
 }
-
+const enable_debug = false;
+function Log(...args: any[]) {
+  if (enable_debug) {
+    console.log(...args);
+  }
+}
 const ops = {
   add: Add,
   cat: Concat,
@@ -85,7 +90,18 @@ function createOpByName(name: keyof typeof ops) {
 
 class ComputationalGraph {
   constructor() { }
-
+  static __do_debug_static = false;
+  static log = (...args: any[]) => {
+    if (this.__do_debug_static) {
+      console.log(...args);
+    }
+  }
+  __do_debug = false;
+  log = (...args: any[]) => {
+    if (this.__do_debug) {
+      console.log(...args);
+    }
+  }
   nodes = [] as ComputationalNode<any, any>[]
 
   inputNodes: Set<ComputationalNode<any, any>> = new Set()
@@ -117,9 +133,9 @@ class ComputationalGraph {
       }
     });
 
-    console.log(`created a graph with ${graph.nodes.length} nodes, ${graph.inputNodes.size} input nodes, ${graph.outputNodes.size} output nodes`)
-    console.log(`input nodes: `, graph.inputNodes);
-    console.log(`output nodes: `, graph.outputNodes);
+    Log(`created a graph with ${graph.nodes.length} nodes, ${graph.inputNodes.size} input nodes, ${graph.outputNodes.size} output nodes`)
+    Log(`input nodes: `, graph.inputNodes);
+    Log(`output nodes: `, graph.outputNodes);
     return graph;
   }
 
@@ -137,7 +153,7 @@ class ComputationalGraph {
       }
     }
 
-    console.log(`created a graph with ${g.inputNodes.size} input nodes, ${g.outputNodes.size} output nodes`)
+    Log(`created a graph with ${g.inputNodes.size} input nodes, ${g.outputNodes.size} output nodes`)
 
     return g;
   }
@@ -146,7 +162,7 @@ class ComputationalGraph {
     const g = this
     const Input = (name: string) => {
       const input = new _Input();
-      input.withArgs(name);
+      input._name = name;
       const node = new ComputationalNode(input);
       g.addNode(node);
       g.addInputNode(node);
@@ -216,15 +232,11 @@ class ComputationalGraph {
         const vals = Object.values(input);
         return vals
       }
-      console.log(`current running Op: `, node.op.constructor.name, extractArgs(node.op));
-      console.log(`in: `, unwarpDeep(input));
+      this.log(`current running Op: `, node.op.constructor.name, extractArgs(node.op));
+      this.log(`in: `, unwarpDeep(input));
       const output = node.apply(...unwarpDeep(input));
-      console.log(`out: `, output);
+      this.log(`out: `, output);
       cache.set(node, output);
-      // log cache
-      // for (const [key, value] of cache.entries()) {
-      //   console.log(`cache: `, key.op.constructor.name, value);
-      // }
       node.children.forEach((child) => {
         set.add(child);
       });
@@ -234,13 +246,10 @@ class ComputationalGraph {
     const result = [] as any[];
     this.outputNodes.forEach((node) => {
       result.push(cache.get(node));
-      if (node.op instanceof _Output && node.op.name !== '') {
-        this.named_results.set(node.op.name, cache.get(node));
+      if (node.op instanceof _Output && node.op._name !== '') {
+        this.named_results.set(node.op._name, cache.get(node));
       }
     });
-
-    // console.log(result);
-    // console.log(JSON.stringify(result, null, 2));   
 
     return result;
   }
@@ -254,13 +263,16 @@ class ComputationalGraph {
   }
 
   run_with_input(input: Record<string, any>) {
+    console.log(`@@@input`, input);
     // override the input nodes
     this.inputNodes.forEach((node) => {
       if (node.op instanceof _Input) {
-        const name = node.op._input;
+        const name = node.op._name;
         if (name in input) {
           node.op._input = input[name];
         } else {
+          console.error(`invalid input for `, node);
+          console.error(`input`, name, `not found`);
           throw new Error(`Input ${name} not found`);
         }
       }
@@ -274,11 +286,15 @@ class ComputationalGraph {
     _input_nodes.forEach((node, i) => {
       if (node.op instanceof _Input) {
         node.op._input = input[i];
-        console.log(`set input ${i} to `, input[i]);
+        this.log(`set input ${i} to `, input[i]);
       }
     })
     return this.run();
   }
+
+  // private clean_cache() {
+  //   this.named_results.clear();
+  // }
 
   /**
    * You must make sure the computationalGraph is a pure function,
@@ -306,9 +322,64 @@ class ComputationalGraph {
  * EP{2,3,1,4,2,3,4,1} - expand permutation
  */
 class Bits {
+  constructor(private bits: number[] = []) { }
+
   static from(s: string) {
-    return s.split(',').map(c => parseInt(c));
+    return new Bits(s.split('').map(c => parseInt(c)));
   }
+
+  static fromNumber(n: number, length: number) {
+    return new Bits(n.toString(2).padStart(length, '0').split('').map(c => parseInt(c)));
+  }
+
+  static fromUTF8(s: string) {
+    return new Bits(new TextEncoder().encode(s).map(c => parseInt(c.toString(2).padStart(8, '0'))).join('').split('').map(c => parseInt(c)));
+  }
+
+  toNumber() {
+    return parseInt(this.bits.join(''), 2);
+  }
+
+  toBinaryString() {
+    return this.bits.join('');
+  }
+
+  toUTF8() {
+    return new TextDecoder().decode(new Uint8Array(this.bits));
+  }
+
+  public get length(): number {
+    return this.bits.length;
+  }
+
+  public get(index: number) {
+    return this.bits[index];
+  }
+
+  public slice(start: number, end: number) {
+    return this.bits.slice(start, end);
+  }
+
+  public concat(...bits: Bits[]) {
+    return new Bits(this.bits.concat(...bits.map(b => b.bits)));
+  }
+
+  public append(...bits: Bits[]) {
+    this.bits.push(...bits.map(b => b.bits).flat());
+  }
+
+  public set(index: number, value: number) {
+    this.bits[index] = value;
+  }
+
+  public getBits() {
+    return this.bits as readonly number[];
+  }
+
+  public static get empty(): Bits {
+    return new Bits();
+  }
+
 }
 
 function parseOp(input: string) {
@@ -345,7 +416,7 @@ function createOp(input: string) {
   if (op) {
     // @ts-ignore
     if (ops[alias[op.name]]) {
-      console.log(`Creating op: ${op.name} with params: ${op.params ?? "<empty>"}`);
+      Log(`Creating op: ${op.name} with params: ${op.params ?? "<empty>"}`);
       const oprand = createOpByName(alias[op.name]);
       oprand.withArgs(...op.params);
       return oprand;

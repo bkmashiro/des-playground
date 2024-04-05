@@ -71,7 +71,7 @@ function P(args: number[]) {
 function P_inverse(args: number[]) {
   // calculate the inverse of the permutation
   const inverse = args.map((_, i) => args.indexOf(i + 1) + 1);
-  console.log(`inverse of ${args} is ${inverse}`);
+  // console.log(`inverse of ${args} is ${inverse}`);
   return createNode(`P{${inverse.join(',')}}`);
 }
 

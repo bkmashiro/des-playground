@@ -156,13 +156,11 @@ class SBox extends Op<[Bits<any>], [Bits<any>]> {
   withArgs(...args: any[]) {
     const vals = args as number[]
     const n = Math.sqrt(vals.length);
-    console.log(n, vals);
     this._sbox = new Array(n).fill(0).map((_, i) => vals.slice(i * n, (i + 1) * n));
   }
 
   apply(input: [Bits<any>]): [Bits<any>] {
     // 1st, 4th bit as row, 2nd, 3rd bit as column
-    // console.log(this._sbox);
     const row = input[0][0] * 2 + input[0][3];
     const col = input[0][1] * 2 + input[0][2];
     const value = this._sbox[row][col];
@@ -173,7 +171,6 @@ class SBox extends Op<[Bits<any>], [Bits<any>]> {
     }
     // reverse
     result.reverse();
-    console.log(`(${row}, ${col}) => ${value} => 0b[${result}]`);
     return [result] as [Bits<any>];
   }
 }
@@ -200,6 +197,7 @@ class OpGroup<T extends NonEmptyArray<unknown>, R extends NonEmptyArray<unknown>
 const __INPUT_NOT_SET = Symbol('Input not set');
 class _Input<L extends number> extends Op<[], [Bits<L>]> {
   _input: any = __INPUT_NOT_SET
+  _name: string = ''
 
   apply(): [Bits<L>] {
     if (this._input === __INPUT_NOT_SET) {
@@ -214,7 +212,7 @@ class _Input<L extends number> extends Op<[], [Bits<L>]> {
 }
 
 class _Output<L extends number> extends Op<[Bits<L>], [Bits<L>]> {
-  name: string = '';
+  _name: string = '';
   memory: any
   apply(input: [Bits<L>]): [Bits<L>] {
     this.memory = input;
@@ -222,7 +220,7 @@ class _Output<L extends number> extends Op<[Bits<L>], [Bits<L>]> {
   }
 
   withArgs(...args: any[]) {
-    this.name = args[0];
+    this._name = args[0];
   }
 }
 
