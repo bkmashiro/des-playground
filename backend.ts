@@ -1,5 +1,5 @@
 import { unwarpDeep } from "./helper";
-import { _Output, Add, And, Concat, Copy, ExpandPermutation, _Literal, Not, NotImplemented, Op, OpGroup, Or, Permutation, Select, ShiftLeft, ShiftRight, Split, Xor, _Input, SBox, Swap } from "./ops/operators";
+import { _Output, Add, And, Concat, Copy, ExpandPermutation, _Literal, Not, NotImplemented, Op, OpGroup, Or, Permutation, Select, ShiftLeft, ShiftRight, Split, Xor, _Input, SBox, Swap, NibbleSubstitution } from "./ops/operators";
 import { NonEmptyArray, EmptyableArray } from "./type.helper";
 
 type ComputationalNodesInputType<T extends NonEmptyArray<unknown>> = {
@@ -43,6 +43,7 @@ const ops = {
   expandPermutation: ExpandPermutation,
   sbox: SBox,
   swap: Swap,
+  nibbleSubstitution: NibbleSubstitution,
   // output: Output,
   // input: Input,
   __NOT_IMPLEMENTED__: NotImplemented,
@@ -159,22 +160,35 @@ class ComputationalGraph {
   }
 
   private getScopeStub() {
+    const name_map = new Map<string, ComputationalNode>();
+
     const g = this
     const Input = (name: string) => {
+      // if exist, return the existing one
+      if (name_map.has(name)) {
+        return name_map.get(name)!;
+      }
       const input = new _Input();
       input._name = name;
       const node = new ComputationalNode(input);
       g.addNode(node);
       g.addInputNode(node);
+      name_map.set(name, node);
       return node;
     }
 
     const Output = (name: string = '') => {
+      // if exist, return the existing one
+      if (name_map.has(name)) {
+        return name_map.get(name)!;
+      }
+
       const out = new _Output()
       out.withArgs(name);
       const node = new ComputationalNode(out);
       g.addNode(node);
       g.addOutputNode(node);
+      name_map.set(name, node);
       return node;
     }
 
@@ -445,7 +459,8 @@ const alias: {
   SP: 'split',
   SEL: 'select',
   SBOX: 'sbox',
-  SW: 'swap'
+  SW: 'swap',
+  NS: 'nibbleSubstitution',
 } as const;
 
 function createOp(input: string) {

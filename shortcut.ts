@@ -64,6 +64,10 @@ function SBox(args: number[]) {
   return createNode(`SBOX{${args.join(',')}}`);
 }
 
+function NibbleSubstitution(args: number[]) {
+  return createNode(`NS{${args.join(',')}}`);
+}
+
 function P(args: number[]) {
   return createNode(`P{${args.join(',')}}`);
 }
@@ -83,6 +87,7 @@ function SW() {
 export const $ = {
   EP,
   SBox,
+  NibbleSubstitution,
   P,
   P_inverse,
 }

@@ -1,4 +1,4 @@
-import { Number, Test, Object, List } from "ts-toolbelt"
+import { Number, Test, Object, List, F } from "ts-toolbelt"
 import { Bits, TupleOf, NonEmptyArray } from "../type.helper";
 
 abstract class Op<T = any, R = any> {
@@ -164,11 +164,48 @@ class SBox extends Op<[Bits<any>], [Bits<any>]> {
     const row = input[0][0] * 2 + input[0][3];
     const col = input[0][1] * 2 + input[0][2];
     const value = this._sbox[row][col];
+    console.log('SBox value:', value);
     // convert to binary
-    const result = new Array(2).fill(0);
+    // if range is 0-3, then 2 bits is enough
+    if (value > 15 || value < 0) {
+      throw new Error('Invalid SBox value');
+    }
+    let result: number[];
+
+    result = new Array(2).fill(0);
     for (let i = 0; i < 2; i++) {
       result[i] = value >> i & 1;
     }
+
+    // reverse
+    result.reverse();
+    return [result] as [Bits<any>];
+  }
+}
+
+class NibbleSubstitution extends Op<[Bits<any>], [Bits<any>]> {
+  _mapping: number[][] = [];
+  withArgs(...args: any[]) {
+    const vals = args as number[]
+    const n = Math.sqrt(vals.length);
+    this._mapping = new Array(n).fill(0).map((_, i) => vals.slice(i * n, (i + 1) * n));
+  }
+
+  /**
+   * Nibble substitution is easier select row and column
+   * just by simply using left 2 bits as row, right 2 bits as column
+   */
+  apply(input: [Bits<any>]): [Bits<any>] {
+    const row = input[0][0] * 2 + input[0][1];
+    const col = input[0][2] * 2 + input[0][3];
+    const value = this._mapping[row][col];
+    let result: number[];
+
+    result = new Array(4).fill(0);
+    for (let i = 0; i < 4; i++) {
+      result[i] = value >> i & 1;
+    }
+
     // reverse
     result.reverse();
     return [result] as [Bits<any>];
@@ -259,6 +296,7 @@ export {
   Select,
   Split,
   SBox,
+  NibbleSubstitution,
   Swap,
   OpGroup,
   _Input,
