@@ -413,6 +413,10 @@ class Bits {
   static XOR(a: Bits, b: Bits) {
     return new Bits(a.bits.map((bit, i) => bit ^ b.bits[i]));
   }
+
+  copy() {
+    return new Bits(this.bits.slice());
+  }
 }
 
 function parseOp(input: string) {
