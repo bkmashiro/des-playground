@@ -36,10 +36,9 @@ g.__do_debug = true
 // const RCON = Bits.fromNumber(0x30, 8)
 // g.run_with_input({
 //   w: w.getBits(),
-//   RCON: RCON.getBits()
+//   rcon: RCON.getBits()
 // })
 // console.log(g.retrive_bits_results('g_w'))
-
 
 const keygen = ComputationalGraph.scope(({ Input, Output }) => {
   const key = Input('key'); // w0w1
@@ -63,5 +62,4 @@ const keygen = ComputationalGraph.scope(({ Input, Output }) => {
   g2.from(RCON_2)
   xor3.to(Output('w4'), xor4)
   xor4.to(Output('w5'))
-
 })
