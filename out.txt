@@ -1,0 +1,1072 @@
+current running Op:  _Input [
+  [
+    0, 1, 0, 0, 1, 0,
+    1, 0, 1, 1, 1, 1,
+    0, 1, 0, 1
+  ],
+  'key'
+]
+in:  []
+out:  [
+  [
+    0, 1, 0, 0, 1, 0,
+    1, 0, 1, 1, 1, 1,
+    0, 1, 0, 1
+  ]
+]
+current running Op:  _Input [
+  [
+    1, 0, 0, 0,
+    0, 0, 0, 0
+  ],
+  'RCON_1'
+]
+in:  []
+out:  [
+  [
+    1, 0, 0, 0,
+    0, 0, 0, 0
+  ]
+]
+current running Op:  _Input [
+  [
+    0, 0, 1, 1,
+    0, 0, 0, 0
+  ],
+  'RCON_2'
+]
+in:  []
+out:  [
+  [
+    0, 0, 1, 1,
+    0, 0, 0, 0
+  ]
+]
+current running Op:  Split [ 2 ]
+in:  [
+  [
+    0, 1, 0, 0, 1, 0,
+    1, 0, 1, 1, 1, 1,
+    0, 1, 0, 1
+  ]
+]
+out:  [
+  [
+    0, 1, 0, 0,
+    1, 0, 1, 0
+  ],
+  [
+    1, 1, 1, 1,
+    0, 1, 0, 1
+  ]
+]
+current running Op:  Select [ 0 ]
+in:  [
+  [
+    0, 1, 0, 0,
+    1, 0, 1, 0
+  ],
+  [
+    1, 1, 1, 1,
+    0, 1, 0, 1
+  ]
+]
+out:  [
+  [
+    0, 1, 0, 0,
+    1, 0, 1, 0
+  ]
+]
+current running Op:  Select [ 1 ]
+in:  [
+  [
+    0, 1, 0, 0,
+    1, 0, 1, 0
+  ],
+  [
+    1, 1, 1, 1,
+    0, 1, 0, 1
+  ]
+]
+out:  [
+  [
+    1, 1, 1, 1,
+    0, 1, 0, 1
+  ]
+]
+current running Op:  SubGraph [
+  ComputationalGraph {
+    __do_debug: true,
+    log: [Function (anonymous)],
+    nodes: [ [ComputationalNode], [ComputationalNode], [ComputationalNode] ],
+    inputNodes: Set(2) { [ComputationalNode], [ComputationalNode] },
+    outputNodes: Set(1) { [ComputationalNode] },
+    named_results: Map(0) {}
+  }
+]
+in:  [
+  [
+    1, 1, 1, 1,
+    0, 1, 0, 1
+  ],
+  [
+    1, 0, 0, 0,
+    0, 0, 0, 0
+  ]
+]
+set input 0 to  [
+  1, 1, 1, 1,
+  0, 1, 0, 1
+]
+set input 1 to  [
+  1, 0, 0, 0,
+  0, 0, 0, 0
+]
+current running Op:  _Input [
+  [
+    1, 1, 1, 1,
+    0, 1, 0, 1
+  ],
+  'w'
+]
+in:  []
+out:  [
+  [
+    1, 1, 1, 1,
+    0, 1, 0, 1
+  ]
+]
+current running Op:  _Input [
+  [
+    1, 0, 0, 0,
+    0, 0, 0, 0
+  ],
+  'rcon'
+]
+in:  []
+out:  [
+  [
+    1, 0, 0, 0,
+    0, 0, 0, 0
+  ]
+]
+current running Op:  Split [ 2 ]
+in:  [
+  [
+    1, 1, 1, 1,
+    0, 1, 0, 1
+  ]
+]
+out:  [ [ 1, 1, 1, 1 ], [ 0, 1, 0, 1 ] ]
+current running Op:  Select [ 0 ]
+in:  [ [ 1, 1, 1, 1 ], [ 0, 1, 0, 1 ] ]
+out:  [ [ 1, 1, 1, 1 ] ]
+current running Op:  Select [ 1 ]
+in:  [ [ 1, 1, 1, 1 ], [ 0, 1, 0, 1 ] ]
+out:  [ [ 0, 1, 0, 1 ] ]
+current running Op:  Swap []
+in:  [ [ 1, 1, 1, 1 ], [ 0, 1, 0, 1 ] ]
+out:  [ [ 0, 1, 0, 1 ], [ 1, 1, 1, 1 ] ]
+current running Op:  Select [ 0 ]
+in:  [ [ 0, 1, 0, 1 ], [ 1, 1, 1, 1 ] ]
+out:  [ [ 0, 1, 0, 1 ] ]
+current running Op:  Select [ 1 ]
+in:  [ [ 0, 1, 0, 1 ], [ 1, 1, 1, 1 ] ]
+out:  [ [ 1, 1, 1, 1 ] ]
+current running Op:  NibbleSubstitution [
+  [
+    [ 9, 4, 10, 11 ],
+    [ 13, 1, 8, 5 ],
+    [ 6, 2, 0, 3 ],
+    [ 12, 14, 15, 7 ]
+  ]
+]
+in:  [ [ 0, 1, 0, 1 ] ]
+out:  [ [ 0, 0, 0, 1 ] ]
+current running Op:  NibbleSubstitution [
+  [
+    [ 9, 4, 10, 11 ],
+    [ 13, 1, 8, 5 ],
+    [ 6, 2, 0, 3 ],
+    [ 12, 14, 15, 7 ]
+  ]
+]
+in:  [ [ 1, 1, 1, 1 ] ]
+out:  [ [ 0, 1, 1, 1 ] ]
+current running Op:  Concat []
+in:  [ [ 0, 0, 0, 1 ], [ 0, 1, 1, 1 ] ]
+out:  [
+  [
+    0, 0, 0, 1,
+    0, 1, 1, 1
+  ]
+]
+current running Op:  Xor []
+in:  [
+  [
+    1, 0, 0, 0,
+    0, 0, 0, 0
+  ],
+  [
+    0, 0, 0, 1,
+    0, 1, 1, 1
+  ]
+]
+out:  [
+  [
+    1, 0, 0, 1,
+    0, 1, 1, 1
+  ]
+]
+current running Op:  _Output [ 'g_w' ]
+in:  [
+  [
+    1, 0, 0, 1,
+    0, 1, 1, 1
+  ]
+]
+out:  [
+  [
+    1, 0, 0, 1,
+    0, 1, 1, 1
+  ]
+]
+out:  [
+  [
+    1, 0, 0, 1,
+    0, 1, 1, 1
+  ]
+]
+current running Op:  _Output [ 'w0' ]
+in:  [
+  [
+    0, 1, 0, 0,
+    1, 0, 1, 0
+  ]
+]
+out:  [
+  [
+    0, 1, 0, 0,
+    1, 0, 1, 0
+  ]
+]
+current running Op:  Xor []
+in:  [
+  [
+    0, 1, 0, 0,
+    1, 0, 1, 0
+  ],
+  [
+    1, 0, 0, 1,
+    0, 1, 1, 1
+  ]
+]
+out:  [
+  [
+    1, 1, 0, 1,
+    1, 1, 0, 1
+  ]
+]
+current running Op:  _Output [ 'w1' ]
+in:  [
+  [
+    1, 1, 1, 1,
+    0, 1, 0, 1
+  ]
+]
+out:  [
+  [
+    1, 1, 1, 1,
+    0, 1, 0, 1
+  ]
+]
+current running Op:  Xor []
+in:  [
+  [
+    1, 1, 1, 1,
+    0, 1, 0, 1
+  ],
+  [
+    1, 1, 0, 1,
+    1, 1, 0, 1
+  ]
+]
+out:  [
+  [
+    0, 0, 1, 0,
+    1, 0, 0, 0
+  ]
+]
+current running Op:  SubGraph [
+  ComputationalGraph {
+    __do_debug: true,
+    log: [Function (anonymous)],
+    nodes: [ [ComputationalNode], [ComputationalNode], [ComputationalNode] ],
+    inputNodes: Set(2) { [ComputationalNode], [ComputationalNode] },
+    outputNodes: Set(1) { [ComputationalNode] },
+    named_results: Map(1) { 'g_w' => [Array] }
+  }
+]
+in:  [
+  [
+    0, 0, 1, 0,
+    1, 0, 0, 0
+  ],
+  [
+    0, 0, 1, 1,
+    0, 0, 0, 0
+  ]
+]
+set input 0 to  [
+  0, 0, 1, 0,
+  1, 0, 0, 0
+]
+set input 1 to  [
+  0, 0, 1, 1,
+  0, 0, 0, 0
+]
+current running Op:  _Input [
+  [
+    0, 0, 1, 0,
+    1, 0, 0, 0
+  ],
+  'w'
+]
+in:  []
+out:  [
+  [
+    0, 0, 1, 0,
+    1, 0, 0, 0
+  ]
+]
+current running Op:  _Input [
+  [
+    0, 0, 1, 1,
+    0, 0, 0, 0
+  ],
+  'rcon'
+]
+in:  []
+out:  [
+  [
+    0, 0, 1, 1,
+    0, 0, 0, 0
+  ]
+]
+current running Op:  Split [ 2 ]
+in:  [
+  [
+    0, 0, 1, 0,
+    1, 0, 0, 0
+  ]
+]
+out:  [ [ 0, 0, 1, 0 ], [ 1, 0, 0, 0 ] ]
+current running Op:  Select [ 0 ]
+in:  [ [ 0, 0, 1, 0 ], [ 1, 0, 0, 0 ] ]
+out:  [ [ 0, 0, 1, 0 ] ]
+current running Op:  Select [ 1 ]
+in:  [ [ 0, 0, 1, 0 ], [ 1, 0, 0, 0 ] ]
+out:  [ [ 1, 0, 0, 0 ] ]
+current running Op:  Swap []
+in:  [ [ 0, 0, 1, 0 ], [ 1, 0, 0, 0 ] ]
+out:  [ [ 1, 0, 0, 0 ], [ 0, 0, 1, 0 ] ]
+current running Op:  Select [ 0 ]
+in:  [ [ 1, 0, 0, 0 ], [ 0, 0, 1, 0 ] ]
+out:  [ [ 1, 0, 0, 0 ] ]
+current running Op:  Select [ 1 ]
+in:  [ [ 1, 0, 0, 0 ], [ 0, 0, 1, 0 ] ]
+out:  [ [ 0, 0, 1, 0 ] ]
+current running Op:  NibbleSubstitution [
+  [
+    [ 9, 4, 10, 11 ],
+    [ 13, 1, 8, 5 ],
+    [ 6, 2, 0, 3 ],
+    [ 12, 14, 15, 7 ]
+  ]
+]
+in:  [ [ 1, 0, 0, 0 ] ]
+out:  [ [ 0, 1, 1, 0 ] ]
+current running Op:  NibbleSubstitution [
+  [
+    [ 9, 4, 10, 11 ],
+    [ 13, 1, 8, 5 ],
+    [ 6, 2, 0, 3 ],
+    [ 12, 14, 15, 7 ]
+  ]
+]
+in:  [ [ 0, 0, 1, 0 ] ]
+out:  [ [ 1, 0, 1, 0 ] ]
+current running Op:  Concat []
+in:  [ [ 0, 1, 1, 0 ], [ 1, 0, 1, 0 ] ]
+out:  [
+  [
+    0, 1, 1, 0,
+    1, 0, 1, 0
+  ]
+]
+current running Op:  Xor []
+in:  [
+  [
+    0, 0, 1, 1,
+    0, 0, 0, 0
+  ],
+  [
+    0, 1, 1, 0,
+    1, 0, 1, 0
+  ]
+]
+out:  [
+  [
+    0, 1, 0, 1,
+    1, 0, 1, 0
+  ]
+]
+current running Op:  _Output [
+  'g_w',
+  [
+    [
+      1, 0, 0, 1,
+      0, 1, 1, 1
+    ]
+  ]
+]
+in:  [
+  [
+    0, 1, 0, 1,
+    1, 0, 1, 0
+  ]
+]
+out:  [
+  [
+    0, 1, 0, 1,
+    1, 0, 1, 0
+  ]
+]
+out:  [
+  [
+    0, 1, 0, 1,
+    1, 0, 1, 0
+  ]
+]
+current running Op:  _Output [ 'w2' ]
+in:  [
+  [
+    1, 1, 0, 1,
+    1, 1, 0, 1
+  ]
+]
+out:  [
+  [
+    1, 1, 0, 1,
+    1, 1, 0, 1
+  ]
+]
+current running Op:  Xor []
+in:  [
+  [
+    1, 1, 0, 1,
+    1, 1, 0, 1
+  ],
+  [
+    0, 1, 0, 1,
+    1, 0, 1, 0
+  ]
+]
+out:  [
+  [
+    1, 0, 0, 0,
+    0, 1, 1, 1
+  ]
+]
+current running Op:  _Output [ 'w3' ]
+in:  [
+  [
+    0, 0, 1, 0,
+    1, 0, 0, 0
+  ]
+]
+out:  [
+  [
+    0, 0, 1, 0,
+    1, 0, 0, 0
+  ]
+]
+current running Op:  Xor []
+in:  [
+  [
+    0, 0, 1, 0,
+    1, 0, 0, 0
+  ],
+  [
+    1, 0, 0, 0,
+    0, 1, 1, 1
+  ]
+]
+out:  [
+  [
+    1, 0, 1, 0,
+    1, 1, 1, 1
+  ]
+]
+current running Op:  _Output [ 'w4' ]
+in:  [
+  [
+    1, 0, 0, 0,
+    0, 1, 1, 1
+  ]
+]
+out:  [
+  [
+    1, 0, 0, 0,
+    0, 1, 1, 1
+  ]
+]
+current running Op:  _Output [ 'w5' ]
+in:  [
+  [
+    1, 0, 1, 0,
+    1, 1, 1, 1
+  ]
+]
+out:  [
+  [
+    1, 0, 1, 0,
+    1, 1, 1, 1
+  ]
+]
+[
+  'w0:01001010',
+  'w1:11110101',
+  'w2:11011101',
+  'w3:00101000',
+  'w4:10000111',
+  'w5:10101111'
+]
+current running Op:  _Input [
+  [
+    [
+      0, 1, 0, 0,
+      1, 0, 1, 0
+    ]
+  ],
+  'w0'
+]
+in:  []
+out:  [
+  [
+    [
+      0, 1, 0, 0,
+      1, 0, 1, 0
+    ]
+  ]
+]
+current running Op:  _Input [
+  [
+    [
+      1, 1, 1, 1,
+      0, 1, 0, 1
+    ]
+  ],
+  'w1'
+]
+in:  []
+out:  [
+  [
+    [
+      1, 1, 1, 1,
+      0, 1, 0, 1
+    ]
+  ]
+]
+current running Op:  _Input [
+  [
+    [
+      1, 1, 0, 1,
+      1, 1, 0, 1
+    ]
+  ],
+  'w2'
+]
+in:  []
+out:  [
+  [
+    [
+      1, 1, 0, 1,
+      1, 1, 0, 1
+    ]
+  ]
+]
+current running Op:  _Input [
+  [
+    [
+      0, 0, 1, 0,
+      1, 0, 0, 0
+    ]
+  ],
+  'w3'
+]
+in:  []
+out:  [
+  [
+    [
+      0, 0, 1, 0,
+      1, 0, 0, 0
+    ]
+  ]
+]
+current running Op:  _Input [
+  [
+    [
+      1, 0, 0, 0,
+      0, 1, 1, 1
+    ]
+  ],
+  'w4'
+]
+in:  []
+out:  [
+  [
+    [
+      1, 0, 0, 0,
+      0, 1, 1, 1
+    ]
+  ]
+]
+current running Op:  _Input [
+  [
+    [
+      1, 0, 1, 0,
+      1, 1, 1, 1
+    ]
+  ],
+  'w5'
+]
+in:  []
+out:  [
+  [
+    [
+      1, 0, 1, 0,
+      1, 1, 1, 1
+    ]
+  ]
+]
+current running Op:  _Input [
+  [
+    1, 1, 0, 1, 0, 1,
+    1, 1, 0, 0, 1, 0,
+    1, 0, 0, 0
+  ],
+  'plaintext'
+]
+in:  []
+out:  [
+  [
+    1, 1, 0, 1, 0, 1,
+    1, 1, 0, 0, 1, 0,
+    1, 0, 0, 0
+  ]
+]
+current running Op:  Flatten []
+in:  [
+  [
+    [
+      0, 1, 0, 0,
+      1, 0, 1, 0
+    ]
+  ]
+]
+out:  [
+  [
+    0, 1, 0, 0,
+    1, 0, 1, 0
+  ]
+]
+current running Op:  Flatten []
+in:  [
+  [
+    [
+      1, 1, 1, 1,
+      0, 1, 0, 1
+    ]
+  ]
+]
+out:  [
+  [
+    1, 1, 1, 1,
+    0, 1, 0, 1
+  ]
+]
+current running Op:  Flatten []
+in:  [
+  [
+    [
+      1, 1, 0, 1,
+      1, 1, 0, 1
+    ]
+  ]
+]
+out:  [
+  [
+    1, 1, 0, 1,
+    1, 1, 0, 1
+  ]
+]
+current running Op:  Flatten []
+in:  [
+  [
+    [
+      0, 0, 1, 0,
+      1, 0, 0, 0
+    ]
+  ]
+]
+out:  [
+  [
+    0, 0, 1, 0,
+    1, 0, 0, 0
+  ]
+]
+current running Op:  Flatten []
+in:  [
+  [
+    [
+      1, 0, 0, 0,
+      0, 1, 1, 1
+    ]
+  ]
+]
+out:  [
+  [
+    1, 0, 0, 0,
+    0, 1, 1, 1
+  ]
+]
+current running Op:  Flatten []
+in:  [
+  [
+    [
+      1, 0, 1, 0,
+      1, 1, 1, 1
+    ]
+  ]
+]
+out:  [
+  [
+    1, 0, 1, 0,
+    1, 1, 1, 1
+  ]
+]
+current running Op:  Concat []
+in:  [
+  [
+    0, 1, 0, 0,
+    1, 0, 1, 0
+  ],
+  [
+    1, 1, 1, 1,
+    0, 1, 0, 1
+  ]
+]
+out:  [
+  [
+    0, 1, 0, 0, 1, 0,
+    1, 0, 1, 1, 1, 1,
+    0, 1, 0, 1
+  ]
+]
+current running Op:  Concat []
+in:  [
+  [
+    1, 1, 0, 1,
+    1, 1, 0, 1
+  ],
+  [
+    0, 0, 1, 0,
+    1, 0, 0, 0
+  ]
+]
+out:  [
+  [
+    1, 1, 0, 1, 1, 1,
+    0, 1, 0, 0, 1, 0,
+    1, 0, 0, 0
+  ]
+]
+current running Op:  Concat []
+in:  [
+  [
+    1, 0, 0, 0,
+    0, 1, 1, 1
+  ],
+  [
+    1, 0, 1, 0,
+    1, 1, 1, 1
+  ]
+]
+out:  [
+  [
+    1, 0, 0, 0, 0, 1,
+    1, 1, 1, 0, 1, 0,
+    1, 1, 1, 1
+  ]
+]
+current running Op:  Xor []
+in:  [
+  [
+    0, 1, 0, 0, 1, 0,
+    1, 0, 1, 1, 1, 1,
+    0, 1, 0, 1
+  ],
+  [
+    1, 1, 0, 1, 0, 1,
+    1, 1, 0, 0, 1, 0,
+    1, 0, 0, 0
+  ]
+]
+out:  [
+  [
+    1, 0, 0, 1, 1, 1,
+    0, 1, 1, 1, 0, 1,
+    1, 1, 0, 1
+  ]
+]
+current running Op:  NibbleSubstitution [
+  [
+    [ 9, 4, 10, 11 ],
+    [ 13, 1, 8, 5 ],
+    [ 6, 2, 0, 3 ],
+    [ 12, 14, 15, 7 ]
+  ]
+]
+in:  [
+  [
+    1, 0, 0, 1, 1, 1,
+    0, 1, 1, 1, 0, 1,
+    1, 1, 0, 1
+  ]
+]
+out:  [
+  [
+    0, 0, 1, 0, 1, 1,
+    1, 0, 1, 1, 1, 0,
+    1, 1, 1, 0
+  ]
+]
+current running Op:  Split [ 4 ]
+in:  [
+  [
+    0, 0, 1, 0, 1, 1,
+    1, 0, 1, 1, 1, 0,
+    1, 1, 1, 0
+  ]
+]
+out:  [ [ 0, 0, 1, 0 ], [ 1, 1, 1, 0 ], [ 1, 1, 1, 0 ], [ 1, 1, 1, 0 ] ]
+current running Op:  Select [ 0 ]
+in:  [ [ 0, 0, 1, 0 ], [ 1, 1, 1, 0 ], [ 1, 1, 1, 0 ], [ 1, 1, 1, 0 ] ]
+out:  [ [ 0, 0, 1, 0 ] ]
+current running Op:  Select [ 3 ]
+in:  [ [ 0, 0, 1, 0 ], [ 1, 1, 1, 0 ], [ 1, 1, 1, 0 ], [ 1, 1, 1, 0 ] ]
+out:  [ [ 1, 1, 1, 0 ] ]
+current running Op:  Select [ 2 ]
+in:  [ [ 0, 0, 1, 0 ], [ 1, 1, 1, 0 ], [ 1, 1, 1, 0 ], [ 1, 1, 1, 0 ] ]
+out:  [ [ 1, 1, 1, 0 ] ]
+current running Op:  Select [ 1 ]
+in:  [ [ 0, 0, 1, 0 ], [ 1, 1, 1, 0 ], [ 1, 1, 1, 0 ], [ 1, 1, 1, 0 ] ]
+out:  [ [ 1, 1, 1, 0 ] ]
+current running Op:  Concat []
+in:  [ [ 0, 0, 1, 0 ], [ 1, 1, 1, 0 ] ]
+out:  [
+  [
+    0, 0, 1, 0,
+    1, 1, 1, 0
+  ]
+]
+current running Op:  Concat []
+in:  [ [ 1, 1, 1, 0 ], [ 1, 1, 1, 0 ] ]
+out:  [
+  [
+    1, 1, 1, 0,
+    1, 1, 1, 0
+  ]
+]
+current running Op:  Concat []
+in:  [
+  [
+    0, 0, 1, 0,
+    1, 1, 1, 0
+  ],
+  [
+    1, 1, 1, 0,
+    1, 1, 1, 0
+  ]
+]
+out:  [
+  [
+    0, 0, 1, 0, 1, 1,
+    1, 0, 1, 1, 1, 0,
+    1, 1, 1, 0
+  ]
+]
+current running Op:  MixColumns [ [ [ 1, 4 ], [ 4, 1 ] ], 16 ]
+in:  [
+  [
+    0, 0, 1, 0, 1, 1,
+    1, 0, 1, 1, 1, 0,
+    1, 1, 1, 0
+  ]
+]
+out:  [
+  [
+    1, 0, 1, 0, 0, 1,
+    1, 0, 0, 1, 1, 0,
+    0, 1, 1, 0
+  ]
+]
+current running Op:  Xor []
+in:  [
+  [
+    1, 1, 0, 1, 1, 1,
+    0, 1, 0, 0, 1, 0,
+    1, 0, 0, 0
+  ],
+  [
+    1, 0, 1, 0, 0, 1,
+    1, 0, 0, 1, 1, 0,
+    0, 1, 1, 0
+  ]
+]
+out:  [
+  [
+    0, 1, 1, 1, 1, 0,
+    1, 1, 0, 1, 0, 0,
+    1, 1, 1, 0
+  ]
+]
+current running Op:  NibbleSubstitution [
+  [
+    [ 9, 4, 10, 11 ],
+    [ 13, 1, 8, 5 ],
+    [ 6, 2, 0, 3 ],
+    [ 12, 14, 15, 7 ]
+  ]
+]
+in:  [
+  [
+    0, 1, 1, 1, 1, 0,
+    1, 1, 0, 1, 0, 0,
+    1, 1, 1, 0
+  ]
+]
+out:  [
+  [
+    0, 1, 0, 1, 0, 0,
+    1, 1, 1, 1, 0, 1,
+    1, 1, 1, 1
+  ]
+]
+current running Op:  Split [ 4 ]
+in:  [
+  [
+    0, 1, 0, 1, 0, 0,
+    1, 1, 1, 1, 0, 1,
+    1, 1, 1, 1
+  ]
+]
+out:  [ [ 0, 1, 0, 1 ], [ 0, 0, 1, 1 ], [ 1, 1, 0, 1 ], [ 1, 1, 1, 1 ] ]
+current running Op:  Select [ 0 ]
+in:  [ [ 0, 1, 0, 1 ], [ 0, 0, 1, 1 ], [ 1, 1, 0, 1 ], [ 1, 1, 1, 1 ] ]
+out:  [ [ 0, 1, 0, 1 ] ]
+current running Op:  Select [ 3 ]
+in:  [ [ 0, 1, 0, 1 ], [ 0, 0, 1, 1 ], [ 1, 1, 0, 1 ], [ 1, 1, 1, 1 ] ]
+out:  [ [ 1, 1, 1, 1 ] ]
+current running Op:  Select [ 2 ]
+in:  [ [ 0, 1, 0, 1 ], [ 0, 0, 1, 1 ], [ 1, 1, 0, 1 ], [ 1, 1, 1, 1 ] ]
+out:  [ [ 1, 1, 0, 1 ] ]
+current running Op:  Select [ 1 ]
+in:  [ [ 0, 1, 0, 1 ], [ 0, 0, 1, 1 ], [ 1, 1, 0, 1 ], [ 1, 1, 1, 1 ] ]
+out:  [ [ 0, 0, 1, 1 ] ]
+current running Op:  Concat []
+in:  [ [ 0, 1, 0, 1 ], [ 1, 1, 1, 1 ] ]
+out:  [
+  [
+    0, 1, 0, 1,
+    1, 1, 1, 1
+  ]
+]
+current running Op:  Concat []
+in:  [ [ 1, 1, 0, 1 ], [ 0, 0, 1, 1 ] ]
+out:  [
+  [
+    1, 1, 0, 1,
+    0, 0, 1, 1
+  ]
+]
+current running Op:  Concat []
+in:  [
+  [
+    0, 1, 0, 1,
+    1, 1, 1, 1
+  ],
+  [
+    1, 1, 0, 1,
+    0, 0, 1, 1
+  ]
+]
+out:  [
+  [
+    0, 1, 0, 1, 1, 1,
+    1, 1, 1, 1, 0, 1,
+    0, 0, 1, 1
+  ]
+]
+current running Op:  MixColumns [ [ [ 1, 4 ], [ 4, 1 ] ], 16 ]
+in:  [
+  [
+    0, 1, 0, 1, 1, 1,
+    1, 1, 1, 1, 0, 1,
+    0, 0, 1, 1
+  ]
+]
+out:  [
+  [
+    0, 0, 0, 1, 0, 0,
+    1, 1, 1, 0, 0, 1,
+    0, 1, 1, 1
+  ]
+]
+current running Op:  Xor []
+in:  [
+  [
+    1, 0, 0, 0, 0, 1,
+    1, 1, 1, 0, 1, 0,
+    1, 1, 1, 1
+  ],
+  [
+    0, 0, 0, 1, 0, 0,
+    1, 1, 1, 0, 0, 1,
+    0, 1, 1, 1
+  ]
+]
+out:  [
+  [
+    1, 0, 0, 1, 0, 1,
+    0, 0, 0, 0, 1, 1,
+    1, 0, 0, 0
+  ]
+]
+current running Op:  _Output [ 'ciphertext' ]
+in:  [
+  [
+    1, 0, 0, 1, 0, 1,
+    0, 0, 0, 0, 1, 1,
+    1, 0, 0, 0
+  ]
+]
+out:  [
+  [
+    1, 0, 0, 1, 0, 1,
+    0, 0, 0, 0, 1, 1,
+    1, 0, 0, 0
+  ]
+]
+1001010000111000

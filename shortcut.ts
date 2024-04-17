@@ -40,6 +40,10 @@ function Select(n: number) {
   return createNode(`SEL{${n}}`);
 }
 
+function Flatten() {
+  return createNode(`FLATTEN`);
+}
+
 function Split(n: number) {
   return createNode(`SP{${n}}`);
 }
@@ -83,6 +87,13 @@ function SW() {
   return createNode(`SW`);
 }
 
+function Literal(value: number) {
+  return createNode(`LIT{${value}}`);
+}
+
+function MixColumns(mat: number[]) {
+  return createNode(`MC{${mat.join(',')}}`);
+}
 
 export const $ = {
   EP,
@@ -90,6 +101,7 @@ export const $ = {
   NibbleSubstitution,
   P,
   P_inverse,
+  MixColumns,
 }
 
 export const $$ = {
@@ -105,4 +117,6 @@ export {
   Xor,
   Cat,
   SW,
+  Literal,
+  Flatten,
 }
