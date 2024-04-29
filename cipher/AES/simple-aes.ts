@@ -69,20 +69,20 @@ const keygen = ComputationalGraph.scope(({ Input, Output }) => {
 });
 // keygen.__do_debug = true;
 // test keygen
-const key = Bits.fromNumber(0x4af5, 16); //01001010 11110101
-const RCON_1 = Bits.fromNumber(0x80, 8);
-const RCON_2 = Bits.fromNumber(0x30, 8);
-keygen.run_with_input({
-  key: key.getBits(),
-  RCON_1: RCON_1.getBits(),
-  RCON_2: RCON_2.getBits(),
-});
+// const key = Bits.fromNumber(0b1101_0111_0010_1000, 16); //01001010 11110101
+// const RCON_1 = Bits.fromNumber(0x80, 8);
+// const RCON_2 = Bits.fromNumber(0x30, 8);
+// keygen.run_with_input({
+//   key: key.getBits(),
+//   RCON_1: RCON_1.getBits(),
+//   RCON_2: RCON_2.getBits(),
+// });
 
-console.log(
-  ["w0", "w1", "w2", "w3", "w4", "w5"].map(
-    (k) => `${k}:` + keygen.retrive_bits_results(k).at(0).join("")
-  )
-);
+// console.log(
+//   ["w0", "w1", "w2", "w3", "w4", "w5"].map(
+//     (k) => `${k}:` + keygen.retrive_bits_results(k).at(0).join("")
+//   )
+// );
 
 const AES = ComputationalGraph.scope(({ Input, Output }) => {
   const [w0, w1, w2, w3, w4, w5] = ["w0", "w1", "w2", "w3", "w4", "w5"].map(
@@ -140,6 +140,8 @@ const AES = ComputationalGraph.scope(({ Input, Output }) => {
   xor2.to(Output("ciphertext"));
 });
 
+AES.__do_debug = true
+
 // AES.run_with_input({
 //   w0: keygen.retrive_bits_results("w0"),
 //   w1: keygen.retrive_bits_results("w1"),
@@ -157,8 +159,13 @@ const AES_decrypt = ComputationalGraph.scope(({ Input, Output }) => {
   const [w0, w1, w2, w3, w4, w5] = ["w0", "w1", "w2", "w3", "w4", "w5"].map(
     (k) => Input(k)
   );
+  //w0w1" 11010111 00101000
+  //w2w3" 00111101 00010101
+  //w4w5" 00011001 00001100
+  //00001010 01011011
   const ciphertext = Input("ciphertext");
   // add round key
+  //00011001 00001100
   const xor0 = Xor();
   ciphertext.to(xor0.from(Cat().from(Flatten().from(w4), Flatten().from(w5))));
   // shift rows (inverse)
@@ -168,9 +175,9 @@ const AES_decrypt = ComputationalGraph.scope(({ Input, Output }) => {
   xor0.to(
     Split(4).to(
       Select(0).to(cat0),
-      Select(1).to(cat0.to(cat01)),
+      Select(3).to(cat0.to(cat01)),
       Select(2).to(cat1),
-      Select(3).to(cat1.to(cat01))
+      Select(1).to(cat1.to(cat01))
     )
   );
   // nibble substitution (inverse)
@@ -191,9 +198,9 @@ const AES_decrypt = ComputationalGraph.scope(({ Input, Output }) => {
   mc0.to(
     Split(4).to(
       Select(0).to(cat2),
-      Select(1).to(cat2.to(cat23)),
+      Select(3).to(cat2.to(cat23)),
       Select(2).to(cat3),
-      Select(3).to(cat3.to(cat23))
+      Select(1).to(cat3.to(cat23))
     )
   );
   // nibble substitution (inverse)
@@ -207,7 +214,7 @@ const AES_decrypt = ComputationalGraph.scope(({ Input, Output }) => {
   xor2.to(Output("plaintext"));
 })
 
-// AES_decrypt.__do_debug = true;
+AES_decrypt.__do_debug = true;
 
 // AES_decrypt.run_with_input({
 //   w0: keygen.retrive_bits_results("w0"),
@@ -284,3 +291,8 @@ export class SimpleAES {
     return Bits.fromArray(AES_decrypt.retrive_bits_results("plaintext").at(0));
   }
 }
+
+const aes = new SimpleAES(Bits.fromNumber(0b1101_0111_0010_1000, 16))
+const res = aes.encrypt(Bits.fromNumber(0x24EC, 16))
+const dec = aes.decrypt(res)
+console.log(res, dec)
