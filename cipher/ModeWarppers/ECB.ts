@@ -8,6 +8,7 @@ export class ECB implements ModeWarpper {
     const blocks = data.split(this._block_size);
     console.log(`blocks:`, blocks);
     for (const block of blocks) {
+      console.log(`block:`, block);
       result.append(this.cipher.encrypt(new Bits(block)).getBits());
       console.log(`encrypted block:`, result.toBinaryString());
     }

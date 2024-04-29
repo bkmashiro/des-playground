@@ -248,6 +248,9 @@ export class SimpleAES {
   }
 
   padBits(bits: Bits) {
+    if (bits.length % 16 === 0) {
+      return bits;
+    }
     const len = bits.length;
     const pad = 16 - (len % 16);
     return bits.padRight(pad, 0);
