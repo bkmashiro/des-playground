@@ -1,4 +1,4 @@
-import { unwarpDeep } from "./helper";
+import { prettyPrint, unwarpDeep } from "./helper";
 import {
   _Output,
   Add,
@@ -296,9 +296,9 @@ class ComputationalGraph {
         node.op.constructor.name,
         extractArgs(node.op)
       );
-      this.log(`in: `, unwarpDeep(input));
+      this.log(`in: `, prettyPrint(unwarpDeep(input)));
       const output = node.apply(...unwarpDeep(input));
-      this.log(`out: `, output);
+      this.log(`out: `, prettyPrint(output));
       cache.set(node, output);
       node.children.forEach((child) => {
         set.add(child);
@@ -492,6 +492,11 @@ class Bits {
 
   static XOR(a: Bits, b: Bits) {
     return new Bits(a.bits.map((bit, i) => bit ^ b.bits[i]));
+  }
+
+  public padRight(n: number, value: number) {
+    this.bits.push(...Array(n).fill(value));
+    return this;
   }
 
   copy() {

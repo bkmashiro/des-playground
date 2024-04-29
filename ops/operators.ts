@@ -2,9 +2,9 @@ import { Number, Test, Object, List, F } from "ts-toolbelt";
 import { Bits, TupleOf, NonEmptyArray } from "../type.helper";
 
 abstract class Op<T = any, R = any> {
-  constructor() {}
+  constructor() { }
   abstract apply(input: T): R;
-  withArgs(..._args: any[]) {}
+  withArgs(..._args: any[]) { }
 }
 
 class Add<L extends number> extends Op<[Bits<L>, Bits<L>], [Bits<L>]> {
@@ -221,15 +221,35 @@ class NibbleSubstitution extends Op<[Bits<any>], [Bits<any>]> {
     return [result] as [Bits<any>];
   }
 }
-
+// ... 8 4 2 1
 function BitsToNumber(bits: Bits<any>) {
-  return bits.reduce((acc, bit) => acc * 2 + bit, 0 as number);
+  let result = 0;
+  for (let i = 0; i < bits.length; i++) {
+    result += bits[i] * 2 ** (bits.length - i - 1);
+  }
+  return result;
 }
 
 function NumberToBits(n: number, length: number) {
   const result = new Array(length).fill(0);
   for (let i = 0; i < length; i++) {
     result[length - i - 1] = (n >> i) & 1;
+  }
+  return result;
+}
+
+// mul under Galois field GF(16)
+function gf2_4_multiply(a: number, b: number) {
+  let result = 0;
+  while (b > 0) {
+    if (b & 1) {
+      result ^= a; // 乘法转换为异或操作
+    }
+    a <<= 1;
+    if (a & 0x10) { // 检查是否需要模 4 阶多项式
+      a ^= 0x13; // 0x13 对应的二进制为 10011，是 4 阶多项式 x^4 + x + 1
+    }
+    b >>= 1;
   }
   return result;
 }
@@ -243,27 +263,44 @@ class MixColumns extends Op<[Bits<any>], [Bits<any>]> {
       .fill(0)
       .map((_, i) => vals.slice(i * n, (i + 1) * n));
   }
-  _mod = 16;
+  /**
+   * M_e = [1,4,
+   *        4,1] 
+   * 
+   * S   = [S_00, S_01
+   *        S_10, S_11]
+   * 
+   * S' = M_e * S
+   */
   apply(input: [Bits<any>]): [Bits<any>] {
-    const s00 = BitsToNumber(input[0].slice(0, 4));
-    const s10 = BitsToNumber(input[0].slice(4, 8));
-    const s01 = BitsToNumber(input[0].slice(8, 12));
-    const s11 = BitsToNumber(input[0].slice(12, 16));
+    const S_00 = BitsToNumber(input[0].slice(0, 4));
+    const S_01 = BitsToNumber(input[0].slice(4, 8));
+    const S_10 = BitsToNumber(input[0].slice(8, 12));
+    const S_11 = BitsToNumber(input[0].slice(12, 16));
+    console.log("MixColumns input:", S_00, S_01, S_10, S_11);
+    const M_e = this._matrix;
+    const mul = gf2_4_multiply;
+    const S_00_new = mul(M_e[0][0], S_00) ^ mul(M_e[0][1], S_01);
+    console.log("mul:", mul(M_e[0][0], S_00), mul(M_e[0][1], S_01));
+    console.log("mul result:", mul(M_e[0][0], S_00) ^ mul(M_e[0][1], S_01));
+    const S_01_new = mul(M_e[1][0], S_00) ^ mul(M_e[1][1], S_01);
+    const S_10_new = mul(M_e[0][0], S_10) ^ mul(M_e[0][1], S_11);
+    const S_11_new = mul(M_e[1][0], S_10) ^ mul(M_e[1][1], S_11);
+    console.log("MixColumns result:", S_00_new, S_01_new, S_10_new, S_11_new);
+    const result = new Array(16).fill(0);
+    const S_00_bits = NumberToBits(S_00_new, 4);
+    const S_01_bits = NumberToBits(S_01_new, 4);
+    const S_10_bits = NumberToBits(S_10_new, 4);
+    const S_11_bits = NumberToBits(S_11_new, 4);
 
-    const s00_ =
-      (this._matrix[0][0] * s00 + this._matrix[0][1] * s10) % this._mod;
-    const s10_ =
-      (this._matrix[1][0] * s00 + this._matrix[1][1] * s10) % this._mod;
-    const s01_ =
-      (this._matrix[0][0] * s01 + this._matrix[0][1] * s11) % this._mod;
-    const s11_ =
-      (this._matrix[1][0] * s01 + this._matrix[1][1] * s11) % this._mod;
+    for (let i = 0; i < 4; i++) {
+      result[i] = S_00_bits[i];
+      result[i + 4] = S_01_bits[i];
+      result[i + 8] = S_10_bits[i];
+      result[i + 12] = S_11_bits[i];
+    }
 
-    return [
-      NumberToBits(s00_, 4).concat(NumberToBits(s10_, 4)).concat(
-        NumberToBits(s01_, 4),
-      ).concat(NumberToBits(s11_, 4)),
-    ] as [Bits<any>];
+    return [result] as [Bits<any>];
   }
 }
 

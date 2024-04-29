@@ -7,9 +7,11 @@ export class CBC implements ModeWarpper {
   }
   
   private temp: Bits;
+  _block_size = 8;
+
 
   encrypt(data: Bits): Bits {
-    const blocks = data.split(8);
+    const blocks = data.split(this._block_size);
     let result = Bits.empty;
     for (const _b of blocks) {
       const block = new Bits(_b);
@@ -20,7 +22,7 @@ export class CBC implements ModeWarpper {
   }
 
   decrypt(data: Bits): Bits {
-    const blocks = data.split(8);
+    const blocks = data.split(this._block_size);
     let result = Bits.empty;
     this.temp = this.iv.copy();
     for (const _b of blocks) {
