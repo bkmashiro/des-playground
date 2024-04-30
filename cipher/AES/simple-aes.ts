@@ -140,7 +140,7 @@ const AES = ComputationalGraph.scope(({ Input, Output }) => {
   xor2.to(Output("ciphertext"));
 });
 
-AES.__do_debug = true
+// AES.__do_debug = true
 
 // AES.run_with_input({
 //   w0: keygen.retrive_bits_results("w0"),
@@ -214,7 +214,7 @@ const AES_decrypt = ComputationalGraph.scope(({ Input, Output }) => {
   xor2.to(Output("plaintext"));
 })
 
-AES_decrypt.__do_debug = true;
+// AES_decrypt.__do_debug = true;
 
 // AES_decrypt.run_with_input({
 //   w0: keygen.retrive_bits_results("w0"),
@@ -273,7 +273,7 @@ export class SimpleAES {
       w5: this.w5,
       plaintext: this.padBits(plaintext).getBits(),
     }
-    console.log(`i:`, i);
+    // console.log(`i:`, i);
     AES.run_with_input(i);
     return Bits.fromArray(AES.retrive_bits_results("ciphertext").at(0));
   }
@@ -292,7 +292,7 @@ export class SimpleAES {
   }
 }
 
-const aes = new SimpleAES(Bits.fromNumber(0b1101_0111_0010_1000, 16))
-const res = aes.encrypt(Bits.fromNumber(0x24EC, 16))
-const dec = aes.decrypt(res)
-console.log(res, dec)
+// const aes = new SimpleAES(Bits.fromNumber(0b1101_0111_0010_1000, 16))
+// const res = aes.encrypt(Bits.fromNumber(0x24EC, 16))
+// const dec = aes.decrypt(res)
+// console.log(res, dec)

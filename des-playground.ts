@@ -17,7 +17,7 @@ import { foo } from "./plaintext";
 // console.log(`  decoded:`, decodeLengthedString(decrypted.toU8Array()));
 
 // AES
-const text = 'a'
+const text = foo
 const key = Bits.fromNumber(0b1101_0111_0010_1000, 16)
 const aes = new ECB(new SimpleAES(key), 16);
 console.log(`     text:`, text);
@@ -26,6 +26,5 @@ console.log(`plaintext:`, plaintext.toBinaryString());
 const cipher = aes.encrypt(plaintext);
 console.log(`encrypted:`, cipher.toBinaryString());
 const decrypted = aes.decrypt(cipher);
-console.log(`@@@`, decrypted)
 console.log(`decrypted:`, decrypted.toBinaryString());
 console.log(`  decoded:`, decodeLengthedString(decrypted.toU8Array()));
